@@ -1,0 +1,6 @@
+/__tests__/e2e/**/*.js
+/__tests__/Extra/**/*.js
+/src/autoTrack/autoTrack/**/*
+/src/newTrack/autoTrack/*
+/rollup.autoTrack.config.js
+/example/**/*

@@ -1,0 +1,21 @@
+{
+  "git": "git@code.byted.org:dp/log-sdk-tob.git",
+  "branch": "release/web-tob",
+  "package": "web-tob",
+  "files": {
+    "src": {
+      "ignore": [
+        ".prettierrc.js",
+        "build_web.sh",
+        "rollup.config.js",
+        "rollup.config.polyfill.js",
+        "webpack.config.js"
+      ],
+      "output": "src"
+    },
+    "types": {
+      "ignore": [],
+      "output": "types"
+    }
+  }
+}

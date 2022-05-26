@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "declaration": false,
+    "lib": ["esnext", "dom"],
+    "allowJs": true,
+    "target": "es5",
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+   
+  },
+  "include": [
+    "src/**/*"
+  ]
+}
