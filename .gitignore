@@ -1,25 +1,8 @@
 node_modules
-.idea
-output
-.DS_Store
-yarn-error.log
-.cache
-net
-js-codemod
-.rpt2_cache
-yarn.lock
-demo/quickapp/build/
-demo/quickapp/dist/
-testconfig.json
-
 #最新添加
 /core
 /es
 /lib
-/npm/**/index.js
-/npm/**/rangers.js
-/test/**/tea-sdk.js
-/test/**/webview-collection.js
-/test/**/webview-marquee.js
-/replay
+package-lock.json
+os.json
 
