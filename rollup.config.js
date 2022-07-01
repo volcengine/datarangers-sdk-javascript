@@ -29,7 +29,7 @@ const commonPlugins = [
   filesize(),
   progress(),
   cleanup(),
-  // terser(),
+  terser(),
 ];
 
 const replaceOptions = {
@@ -149,24 +149,6 @@ const logPluginSDKEntry = [
     ],
   },
   {
-    input: 'src/plugin/tracer/tracer.ts',
-    output: [
-      {
-        file: 'es/plugin/tracer.js',
-        format: 'es',
-      },
-    ],
-  },
-  {
-    input: 'src/plugin/tracer/tracer.ts',
-    output: [
-      {
-        file: 'lib/plugin/tracer.js',
-        format: 'cjs',
-      },
-    ],
-  },
-  {
     input: 'src/plugin/route/route.ts',
     output: [
       {
@@ -256,25 +238,22 @@ function getPluginBundlesWithReplace(replaceObj, outputName) {
 
 export default [].concat(
   ...getBaseBundlesWithReplace({
-    '/**@@SDK_TOC': '//',
-    '@@SDK_TOC*/': '//',
+    '/**@@SDK': '//',
+    '@@SDK*/': '//',
   },
   '',
   ),
 
   ...getFullBundlesWithReplace({
-    '/**@@SDK_TOC': '//',
-    '@@SDK_TOC*/': '//',
-
-    '/**@@SDK_FULL': '//',
-    '@@SDK_FULL*/': '//',
+    '/**@@SDK': '//',
+    '@@SDK*/': '//',
   },
   '',
   ),
 
   ...getPluginBundlesWithReplace({
-    '/**@@SDK_TOC': '//',
-    '@@SDK_TOC*/': '//',
+    '/**@@SDK': '//',
+    '@@SDK*/': '//',
   },
   '',
   ),

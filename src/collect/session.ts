@@ -1,3 +1,4 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 import Types from './hooktype'
 import Storage from '../util/storage'
 
@@ -22,7 +23,7 @@ export default class Session {
   apply(collect: any, config: any) {
     this.collect = collect
     this.storage = new Storage(false, 'session')
-    this.sessionKey =  `__tea_session_id_${config.app_id}`
+    this.sessionKey =  `__rangers_session_id_${config.app_id}`
     this.expireTime = config.expireTime || 30 * 60 * 1000
     this.disableSession = config.disable_session
     if (this.disableSession) return

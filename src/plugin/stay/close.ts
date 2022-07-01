@@ -1,3 +1,4 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 import { isSupVisChange, beforePageUnload, isObject } from '../../util/tool'
 
 interface Option {
@@ -122,13 +123,15 @@ export default class Close {
   };
 
   enablePageClose() {
-    document.addEventListener('visibilitychange', this.visibilitychange.bind(this))
-    beforePageUnload(this.beforeunload.bind(this))
+    const change = this.visibilitychange.bind(this)
+    const before = this.beforeunload.bind(this)
+    document.addEventListener('visibilitychange', change)
+    beforePageUnload(before)
     return () => {
       this.beforeunload()
-      document.removeEventListener('visibilitychange', this.visibilitychange.bind(this))
-      window.removeEventListener('beforeunload', this.beforeunload.bind(this))
-      window.removeEventListener('pagehide', this.beforeunload.bind(this))
+      document.removeEventListener('visibilitychange', change)
+      window.removeEventListener('beforeunload', before)
+      window.removeEventListener('pagehide', before)
     };
   }
 }

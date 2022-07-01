@@ -1,7 +1,9 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import { init, addAllowdOrigin, dispatchMsg, receiveMsg, IDataReceive } from '../../util/postMessage'
 import { checkSession, checkSessionHost, setSession, checkEditUrl } from './session'
 import { VISUAL_EDITOR_RANGERS, HOT_PIC_URL, SDK_VERSION } from '../../collect/constant'
-import {decodeUrl, loadScript} from '../../util/tool'
+import { loadScript } from '../../util/tool'
 
 interface IAppData {
   aid: number;
@@ -14,7 +16,7 @@ interface IXPath {
 // eslint-disable-next-line
 declare global {
   interface Window {
-    TEAVisualEditor: {
+    RANGERSVisualEditor: {
       __editor_url?: string;
       __editor_ajax_domain?: string;
       appId?: number|string;
@@ -30,7 +32,7 @@ declare global {
   }
 }
 
-window.TEAVisualEditor = window.TEAVisualEditor || {}
+window.RANGERSVisualEditor = window.RANGERSVisualEditor || {}
 
 let isLoaded = false;
 
@@ -53,52 +55,14 @@ function loadEditorScript({ event, editorUrl, autoTrackInstance }) {
 export default function readyToLoadEditor(autoTrackInstance, options) {
   let EDITOR_URL =  '' 
   const EDITOR_URL_NEW = `${VISUAL_EDITOR_RANGERS}?query=${Date.now()}`
-  window.TEAVisualEditor.appId = options.app_id
-  var isPrivate = options.channel_domain
-  var _editorUrl = ''
+  window.RANGERSVisualEditor.appId = options.app_id
   addAllowdOrigin(['*'])
-  if (isPrivate) {
-    // 添加域名白名单
-    var domain
-    var scriptSrc = ''
-    try {
-      var resourceList = window.performance.getEntriesByType('resource')
-      if (resourceList && resourceList.length) {
-        resourceList.forEach(item => {
-          if (item['initiatorType'] === 'script') {
-            if (item.name && item.name.indexOf('collect') !== -1) {
-              scriptSrc = item.name
-            }
-          }
-        })
-        if (!scriptSrc) {
-          if (document.currentScript) {
-            scriptSrc = document.currentScript['src']
-          }
-        }
-        if (scriptSrc) {
-          domain = scriptSrc.split('/')
-          if (domain && domain.length) {
-            _editorUrl = `https:/`
-            for(let i=2; i<domain.length;i++) {
-              if (i === domain.length - 1) break;
-              _editorUrl = _editorUrl + `/${domain[i]}`
-            }
-            if (_editorUrl && _editorUrl.indexOf('/5.0')) {
-              const editorAry = _editorUrl.split('/5.0')
-              _editorUrl = editorAry[0] || _editorUrl
-            }
-          }
-        }
-      }
-    } catch (e) {}
-  }
   init(options, SDK_VERSION)  
   if (checkSession()) {
     const API_HOST = checkSessionHost()
     let cacheUrl = ''
     if (API_HOST) {
-      window.TEAVisualEditor.__editor_ajax_domain = API_HOST
+      window.RANGERSVisualEditor.__editor_ajax_domain = API_HOST
       cacheUrl = checkEditUrl()
     }
     loadEditorScript({ event: null, editorUrl: cacheUrl || EDITOR_URL_NEW, autoTrackInstance })
@@ -117,27 +81,16 @@ export default function readyToLoadEditor(autoTrackInstance, options) {
         if (!rawData) return
         const { referrer, lang } = rawData
         if (referrer) { 
-          window.TEAVisualEditor.__editor_ajax_domain = referrer
+          window.RANGERSVisualEditor.__editor_ajax_domain = referrer
         }
         EDITOR_URL = EDITOR_URL_NEW
-        if (isPrivate) {
-          // 私有化
-          const { version } = rawData
-          const _version = version ? `/visual-editor-rangers-v${version}` : '/visual-editor-rangers-v1.0.0'
-          if (_editorUrl) {
-            EDITOR_URL = `${_editorUrl}${_version}.js`
-          } else {
-            EDITOR_URL = EDITOR_URL_NEW
-          }
-          window.TEAVisualEditor.__editor_verison = version
-        }
-        window.TEAVisualEditor.__editor_url = EDITOR_URL
-        window.TEAVisualEditor.lang = lang
+        window.RANGERSVisualEditor.__editor_url = EDITOR_URL
+        window.RANGERSVisualEditor.lang = lang
         loadEditorScript({ event, editorUrl: EDITOR_URL, autoTrackInstance })
         setSession()
       })
-      window.TEAVisualEditor.openAutotrackEditor = () => {
-        loadEditorScript({ event: null, editorUrl: window.TEAVisualEditor.__editor_url, autoTrackInstance })
+      window.RANGERSVisualEditor.openAutotrackEditor = () => {
+        loadEditorScript({ event: null, editorUrl: window.RANGERSVisualEditor.__editor_url, autoTrackInstance })
       }
     } catch (e) {
       console.log('receive message error')
@@ -146,13 +99,6 @@ export default function readyToLoadEditor(autoTrackInstance, options) {
   try {
     receiveMsg('tea:openHeatMapCore', (event) => {
       let hotUrl = HOT_PIC_URL
-      /**@@PRIVITY
-      if (isPrivate) {
-        hotUrl = _editorUrl ? `${_editorUrl}/heatmap-core.2.2.0` : `${hotUrl}.2.2.0`
-      } else {
-        hotUrl = `${hotUrl}.2.2.0`
-      }
-      @@PRIVITY*/
       loadEditorScript({ event, editorUrl: `${hotUrl}.js?query=${Date.now()}`, autoTrackInstance })
     })
   } catch(e) {

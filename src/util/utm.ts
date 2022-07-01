@@ -1,8 +1,10 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import Storage from './storage'
 const UTM = (app_id: number, urlQueryObj: any, domain: string, cookie_expire: number) => {
   const storage = new Storage(false)
   const session = new Storage(false, 'session')
-  const cacheKey = app_id ? `_tea_utm_cache_${app_id}` : '_tea_utm_cache'
+  const cacheKey = app_id ? `_rangers_utm_cache_${app_id}` : '_rangers_utm_cache'
   const sourceKey = app_id ? `_$utm_from_url_${app_id}` : '_$utm_from_url'
   let utmObj = {}
   const tracer_data = ['tr_shareuser', 'tr_admaster', 'tr_param1', 'tr_param2','tr_param3','tr_param4', '$utm_from_url']

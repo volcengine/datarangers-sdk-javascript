@@ -1,3 +1,5 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 enum Types {
   Init = 'init',
   Config = 'config',
@@ -59,9 +61,6 @@ enum Types {
   Autotrack = 'autotrack',
   AutotrackReady = 'autotrack-ready',
 
-  CepReady = 'cep-ready',
-
-  TracerReady = 'tracer-ready'
 }
 
 export default Types;

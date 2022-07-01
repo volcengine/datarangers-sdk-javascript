@@ -1,6 +1,7 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 export const getNameSpace = () => {
 	if (typeof window !== 'undefined') {
-		return window['LogAnalyticsObject'] || window['TeaAnalyticsObject']
+		return window['LogAnalyticsObject']
 	}
 }
 

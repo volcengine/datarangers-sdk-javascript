@@ -1,3 +1,4 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 
 interface I_LOG_URL {
   cn: string
@@ -12,11 +13,9 @@ LOG = {
   sg: '1fz22z22z1nz21z4mz4bz4bz1kz1az21z4az22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
 }
 
-// CN: https://mcs.volceapplog.com VA: https://mcs.itobsnssdk.com SG: https://mcs.tobsnssdk.com
-
 export const LOG_URL = LOG
 
-export const SDK_VERSION = '5.0.0_tob'
+export const SDK_VERSION = '5.0.0'
 
 export const VISUAL_EDITOR_RANGERS = 'https://lf3-data.volccdn.com/obj/data-static/log-sdk/collect/visual-editor-rangers.js'
 export const VISUAL_AB_CORE = 'https://lf3-data.volccdn.com/obj/data-static/log-sdk/collect/visual-ab-core.js'

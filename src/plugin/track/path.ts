@@ -1,3 +1,5 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import { isNeedElement } from './dom'
 
 export function getPositionData(target: HTMLElement) {

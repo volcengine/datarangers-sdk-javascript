@@ -1,10 +1,10 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 import Listener from './listener'
 import Config , { defaultConfig } from './config'
 import EventHandle from './event'
 import Request from './request'
 import { OptionsType, EventInfo } from './type'
 import readyToLoadEditor from './load'
-import { getLogPluginSpace } from '../../collect/namespace'
 
 const defaultOpt = {
   hashTag: false,
@@ -89,19 +89,6 @@ export default class AutoTrack {
     this.Listener.removeListener()
   }
 }
-
-/**@@SCRIPT
-  try {
-    const exportAutoTrack = (collect: any, config: any) => {
-      const autoTrack = new AutoTrack()
-      autoTrack.apply(collect, config)
-    }
-    const pluginObject = getLogPluginSpace()
-    if (pluginObject) {
-      pluginObject.LogAutoTrack = exportAutoTrack
-    }
-  } catch (e) {}
-@@SCRIPT*/
 
 
 

@@ -1,3 +1,4 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 import Types from './hooktype';
 import Storage from '../util/storage'
 import request from '../util/request'
@@ -31,9 +32,9 @@ export default class Event {
     this.reportTime = config.reportTime || 30
     this.timeout = config.timeout || 100000
     this.reportUrl = this.configManager.getUrl('event')
-    this.eventKey = `__tea_cache_events_${this.configManager.get('app_id')}`
-    this.beconKey = `__tea_cache_events_becon_${this.configManager.get('app_id')}`
-    this.abKey =`__tea_sdk_ab_version_${this.configManager.get('app_id')}`
+    this.eventKey = `__rangers_cache_events_${this.configManager.get('app_id')}`
+    this.beconKey = `__rangers_cache_events_becon_${this.configManager.get('app_id')}`
+    this.abKey =`__rangers_sdk_ab_version_${this.configManager.get('app_id')}`
     this.collect.on(Types.Ready, () => {
       this.reportAll(false)
     })

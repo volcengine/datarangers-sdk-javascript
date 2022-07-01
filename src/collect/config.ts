@@ -1,3 +1,4 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 import Client from '../util/client'
 import Storage from '../util/storage'
 import { decodeUrl } from '../util/tool'
@@ -34,8 +35,8 @@ export default class ConfigManager {
     this.initConfig = initConfig
     const client = new Client(initConfig.app_id, initConfig.cookie_domain || '', initConfig.cookie_expire || EXPIRE_TIME)
     const commonInfo = client.init()
-    const firstKey = `__tea_cache_first_${initConfig.app_id}`
-    this.configKey = `__tea_cache_config_${initConfig.app_id}`
+    const firstKey = `__rangers_cache_first_${initConfig.app_id}`
+    this.configKey = `__rangers_cache_config_${initConfig.app_id}`
     this.sessionStorage = new Storage(false, 'session')
     this.localStorage = new Storage(false, 'local')
     if (initConfig.configPersist) {
@@ -162,11 +163,7 @@ export default class ConfigManager {
         report = TOB_URL
         break;
     }
-    let query = ''
-    if (this.initConfig.caller) {
-      query =  `?sdk_version=${SDK_VERSION}&sdk_name=web&app_id=${this.initConfig.app_id}&caller=${this.initConfig.caller}`
-    }
-    return `${this.getDomain()}${report}${query}`
+    return `${this.getDomain()}${report}`
   }
   setCustom(commonInfo) {
     if (commonInfo && commonInfo.latest_data && commonInfo.latest_data.isLast) {

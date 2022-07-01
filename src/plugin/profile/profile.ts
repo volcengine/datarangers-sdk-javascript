@@ -1,3 +1,5 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 interface ProfileParams {
   [key: string]: string | number | Array<any>;
 }

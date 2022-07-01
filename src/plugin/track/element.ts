@@ -1,3 +1,5 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import { getText, getContainer, getTextSingle, isAttrFilter, getAttributes } from './dom'
 import { getXpath, getPositionData, getEventData } from './path'
 import { IGNORE } from './event'
@@ -38,8 +40,8 @@ export default function getElementData(event: any, element: HTMLElement, options
   const since_page_start_ms = Date.now() - page_start_ms
   const _position = positions.map(item => `${item}`)
   let elementObj = null
-  if (window.TEAVisualEditor.getOriginXpath) {
-    elementObj = window.TEAVisualEditor.getOriginXpath({
+  if (window.RANGERSVisualEditor.getOriginXpath) {
+    elementObj = window.RANGERSVisualEditor.getOriginXpath({
       xpath: element_path,
       positions: _position
     })

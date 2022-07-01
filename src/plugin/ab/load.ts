@@ -6,7 +6,7 @@ let VISUAL_URL = ''
 
 let isLoaded = false;
 
-function loadEditorScript({ event, editorUrl, collectInstance, fromSession = true }) {
+function loadEditorScript({ event, editorUrl }) {
   if (isLoaded) {
     return
   }
@@ -23,43 +23,11 @@ function loadEditorScript({ event, editorUrl, collectInstance, fromSession = tru
 }
 
 export default function readyToLoadEditor(collectInstance: any, config: any) {
-  window.TEAVisualEditor = window.TEAVisualEditor || {}
+  window.RANGERSVisualEditor = window.RANGERSVisualEditor || {}
   addAllowdOrigin(['*'])
   var _editorUrl = ''
   init(config, SDK_VERSION)
-  var domain
-  var scriptSrc = ''
-  try {
-    var resourceList = window.performance.getEntriesByType('resource')
-    if (resourceList && resourceList.length) {
-      resourceList.forEach(item => {
-        if (item['initiatorType'] === 'script') {
-          if (item.name && item.name.indexOf('collect') !== -1) {
-            scriptSrc = item.name
-          }
-        }
-      })
-      if (!scriptSrc) {
-        // if the filename is error
-        if (document.currentScript) {
-          // not support in ie
-          scriptSrc = document.currentScript['src']
-        }
-      }
-      if (scriptSrc) {
-        domain = scriptSrc.split('/')
-        if (domain && domain.length) {
-          _editorUrl = `https:/`
-          for (let i = 2; i < domain.length; i++) {
-            if (i === domain.length - 1) break;
-            _editorUrl = _editorUrl + `/${domain[i]}`
-          }
-          _editorUrl = `${_editorUrl}/visual-ab-core`
-        }
-      }
-    }
-  } catch (e) { }
-  receiveMsg('tea:openVisualABEditor', (event) => {
+  receiveMsg('rangers:openVisualABEditor', (event) => {
     let rawData: IDataReceive = event.data
     if (typeof event.data === 'string') {
       try {
@@ -87,13 +55,13 @@ export default function readyToLoadEditor(collectInstance: any, config: any) {
     } else {
       VISUAL_URL = `${VISUAL_AB_CORE}?query=${Date.now()}`
     }
-    window.TEAVisualEditor.lang = lang
-    window.TEAVisualEditor.__ab_domin = config.channel_domain || ''
-    loadEditorScript({ event, editorUrl: VISUAL_URL, collectInstance })
+    window.RANGERSVisualEditor.lang = lang
+    window.RANGERSVisualEditor.__ab_domin = config.channel_domain || ''
+    loadEditorScript({ event, editorUrl: VISUAL_URL })
   })
 }
 export const loadMuiltlink = (collectInstance: any, config: any) => {
-  window.TEAVisualEditor.appId = config.app_id
+  window.RANGERSVisualEditor.appId = config.app_id
   receiveMsg('tea:openTesterEventInspector', (event) => {
     let rawData: IDataReceive = event.data
     if (typeof event.data === 'string') {
@@ -105,18 +73,15 @@ export const loadMuiltlink = (collectInstance: any, config: any) => {
     }
     if (!rawData) return
     const { referrer, lang, appId } = rawData;
-    window.TEAVisualEditor.__editor_ajax_domain = referrer || '';
-    window.TEAVisualEditor.__ab_appId = appId || '';
-    window.TEAVisualEditor.lang = lang || ''
+    window.RANGERSVisualEditor.__editor_ajax_domain = referrer || '';
+    window.RANGERSVisualEditor.__ab_appId = appId || '';
+    window.RANGERSVisualEditor.lang = lang || ''
     let inspectorUrl = VISUAL_URL_INSPECTOR
-    /**@@PRIVITY
-    inspectorUrl = `${inspectorUrl}.2.2.0`
-    @@PRIVITY*/
-    loadEditorScript({ event, editorUrl: `${inspectorUrl}.js?query=${Date.now()}`, collectInstance })
+    loadEditorScript({ event, editorUrl: `${inspectorUrl}.js?query=${Date.now()}` })
   })
 }
 export const loadVisual = (abconfig: any) => {
-  window.TEAVisualEditor.__ab_config = abconfig
+  window.RANGERSVisualEditor.__ab_config = abconfig
   loadScript(`${VISUAL_AB_LOADER}?query=${Date.now()}`, () => {
     console.log('load visual render success')
   }, () => {

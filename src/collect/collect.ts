@@ -1,3 +1,5 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import { IInitParam, IConfigParam} from '../../types/types'
 import Hook from '../util/hook';
 import { THook, THookInfo } from '../util/hook';
@@ -9,11 +11,9 @@ import AppBridge from '../util/jsbridge'
 import Event from './event'
 import Token from './token'
 import Session from './session';
-import AutoBase from './autobase';
 import { SDK_VERSION } from './constant'
 import Storage from '../util/storage'
 import fetch from '../util/fetch'
-import { pluginExtendList } from './plugin'
 
 
 type TEvent = any;
@@ -30,11 +30,6 @@ type Plugin = {
   plugin: IPlugin;
   options?: any
 }
-
-let sdk_type = 'base'
-/**@@SDK_FULL
-sdk_type = 'full'
-@@SDK_FULL*/
 
 export default class Collector {
   name: string
@@ -86,31 +81,6 @@ export default class Collector {
       }
     } else {
       Collector.plugins.push({ plugin })
-    }
-  }
-  usePlugin(name: string, plugin?: any, instance?: string) {
-    if (!name) return;
-    if (sdk_type === 'full' && pluginExtendList.hasOwnProperty(name)) {
-      console.info(`your sdk version has ${name} already ~`)
-      return;
-    }
-    if (!plugin) {
-      // 自带插件
-      if (!this.remotePlugin.get(name)) {
-        this.remotePlugin.set(name, 'sdk')
-      }
-    } else {
-      if (typeof plugin === 'string') {
-        // 远程插件
-        if (!this.remotePlugin.get(name)) {
-          this.remotePlugin.set(name, {src: plugin, call: instance})
-        }
-      } else {
-        // 本地插件
-        if (!this.remotePlugin.get(name)) {
-          this.remotePlugin.set(name, {instance: plugin})
-        }
-      }
     }
   }
   init(initConfig: IInitParam){
@@ -173,7 +143,7 @@ export default class Collector {
         console.info(`[${this.name}] appid: ${initConfig.app_id}, userInfo:${JSON.stringify(this.configManager.get('user'))}`);
         console.info(`[${this.name}] appid: ${initConfig.app_id}, sdk is ready, version is ${SDK_VERSION}, you can report now !!!`);
         try {
-          (window.opener || window.parent).postMessage('[tea-sdk]ready', '*');
+          (window.opener || window.parent).postMessage('rangers-sdk]ready', '*');
         } catch (e) {}
         if (initConfig.disable_auto_pv) {
           this.disableAutoPageView = true;
@@ -521,9 +491,7 @@ export default class Collector {
   getAllVars(callback) {
     this.emit(Types.AbAllVars, callback, Types.Ab)
   }
-  autoInitializationRangers(initConfig: IInitParam & { app_id: number; onTokenReady: (webId: string) => void }){
-    AutoBase(initConfig)
-  }
+
   destoryInstace() {
     if (this.destroyInstance) return
     this.destroyInstance = true

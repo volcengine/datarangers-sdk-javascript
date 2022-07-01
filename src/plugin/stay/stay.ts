@@ -1,6 +1,7 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import Alive from './alive'
 import Close from './close'
-import { getLogPluginSpace } from '../../collect/namespace'
 
 export default class Stay {
   collect: any
@@ -70,18 +71,3 @@ export default class Stay {
     this.reset(url_path, title, url)
   }
 }
-
-/**@@SCRIPT
-const exportStay = (collect: any, config: any) => {
-  const stay = new Stay()
-  stay.apply(collect, config)
-}
-try {
-  const pluginObject = getLogPluginSpace()
-  if (pluginObject) {
-    pluginObject.LogStay = exportStay
-  }
-} catch (e) {
-  console.log(e)
-}
-@@SCRIPT*/

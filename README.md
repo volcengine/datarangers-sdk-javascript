@@ -1,4 +1,7 @@
 # `DataRangers SDK - javascript`
+## Sample
+npm install 
+npm run build
 
 ## Sample
 

@@ -1,4 +1,4 @@
-// web埋点实时验证
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 import { isArray } from '../../util/tool'
 interface IData {
 	type: string;

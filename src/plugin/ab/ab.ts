@@ -1,6 +1,4 @@
-import {
-  getLogPluginSpace,
-} from '../../collect/namespace';
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 import { openOverlayer, closeOverlayer } from './layer';
 import { getIframeUrl, isObject, parseUrlQuery, parseURL, decodeUrl } from '../../util/tool';
 import readyToLoadEditor, { loadVisual, loadMuiltlink } from './load';
@@ -31,8 +29,6 @@ const DOMAINS = {
   va: '1fz22z22z1nz21z4mz4bz4bz22z1mz19z1jz1mz1ez4az1gz22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
   sg: '1fz22z22z1nz21z4mz4bz4bz22z1mz19z1jz1mz1ez4az22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
 }
-
-// cn https://toblog.ctobsnssdk.com va: https://toblog.itobsnssdk.com sg: https://toblog.tobsnssdk.com
 export default class Ab {
   collect: any;
   config: any;
@@ -66,7 +62,7 @@ export default class Ab {
     this.fetch = fetch;
     this.enable_multilink = enable_multilink;
     this.enable_ab_visual = enable_ab_visual;
-    this.abKey =`__tea_sdk_ab_version_${config.app_id}`
+    this.abKey =`__rangers_sdk_ab_version_${config.app_id}`
     this.fetchUrl = `${abDomain}${API}`;
     this.reportUrl = `${collect.configManager.getUrl('event')}`;
     const { Types } = this.collect;
@@ -440,23 +436,6 @@ export default class Ab {
       (response) => {
         this.fetchStatus = 'complete';
         this.refreshFetchStatus === 'complete';
-        // let aa = {
-        //   message: "success",
-        //   data: {
-        //     abcdefg: { val: "gss", vid: "11407" },
-        //     erf: { val: 'name', vid: "22" },
-        //     hhhhh: { val: 'age', vid: "33" },
-        //     juuioh: { val: 'sex', vid: "44" },
-        //     $ab_url: { val: 'http://0.0.0.0:8899/index_cdn_5.html?off=true', vid:'0000'}
-        //   }
-        // }
-        // if (env.user.user_unique_id === 'ssss') {
-        //   aa.data.abcdefg.vid = '00000'
-        // }
-        // let _res = aa
-        // if (location.search === '?off=true') {
-        //   _res = response
-        // }
         const { data, message } = response; // 解析出code
         if (message === 'success') {
           this.fetchComplete(data, env.user.user_unique_id);
@@ -489,18 +468,3 @@ export default class Ab {
     return url;
   }
 }
-
-/**@@SCRIPT
-try {
-  const exportAb = (collect: any, config: any) => {
-    const ab = new Ab()
-    ab.apply(collect, config)
-  }
-  const pluginObject = getLogPluginSpace()
-  if (pluginObject) {
-    pluginObject.LogAb = exportAb
-  }
-} catch (e) {
-  console.log(e)
-}
-@@SCRIPT*/

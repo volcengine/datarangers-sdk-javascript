@@ -14,10 +14,7 @@ export interface IInitParam {
   disable_session?: boolean;
   disable_heartbeat?:boolean;
   disable_auto_pv?: boolean;
-  enable_tracer?: boolean;
   enable_spa?: boolean;
-  event_verify_url?: string;
-  enable_ttwebid?: boolean;
   user_unique_type?: string;
   enable_ab_test?: boolean;
   max_storage_num?: number;
@@ -218,9 +215,6 @@ interface Sdk {
   getAbConfig(params: Record<string, any>, callbacl: (value: any) => void): void;
   openOverlayer(): void;
   closeOverlayer(): void;
-  autoInitializationRangers(
-    config: IInitParam & { onTokenReady: (webId: string) => void },
-  ): void;
 }
 declare const Sdk: Sdk;
 export const Collector: SdkConstructor;

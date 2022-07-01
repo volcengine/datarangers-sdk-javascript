@@ -1,3 +1,5 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 export type TReceiveMsgCallback = (event: MessageEvent, payload: any) => any;
 export interface IDataObj {
   type: string;
@@ -81,10 +83,5 @@ export function init(config: any, version: string) {
   if (typeof copyConfig['autotrack'] === 'object' && copyConfig['autotrack']['collect_url']) {
     delete copyConfig['autotrack']['collect_url']
   }
-  (window.opener || window.parent).postMessage({
-    type: 'tea:sdk:info',
-    copyConfig,
-    version
-  }, '*');
   window.addEventListener('message', processMsg, false);
 }

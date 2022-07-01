@@ -4,7 +4,7 @@
   "scripts": {
     "nclean": "rimraf es lib core",
     "build": "export NODE_ENV=production && npm run nclean && npx rollup -c rollup.config.js",
-    "build-core": "export NODE_ENV=production && npm run ncclean && npx rollup -c rollup.config.polyfill.js"
+    "build-core": "export NODE_ENV=production && npm run nclean && npx rollup -c rollup.config.polyfill.js"
   },
   "license": "ISC",
   "dependencies": {
@@ -38,6 +38,7 @@
     "eslint": "^8.16.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-typescript": "^0.14.0",
+    "rimraf": "^3.0.2",
     "rollup": "^2.74.1",
     "rollup-plugin-babel": "^4.4.0",
     "rollup-plugin-cleanup": "^3.2.1",

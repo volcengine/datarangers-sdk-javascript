@@ -1,5 +1,6 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import { stringify } from '../../util/tool';
-import { getLogPluginSpace }  from '../../collect/namespace';
 
 class RuotePage {
   storage: any
@@ -29,7 +30,7 @@ class RuotePage {
   setKey() {
     const { storage } = this.collect.adapters;
     this.storage = new storage(false)
-    this.cache_key = `__tea_cache_refer_${this.appid}`
+    this.cache_key = `__rangers_cache_refer_${this.appid}`
     this.cache = {
       refer_key: location.href,
       refer_title: document.title || location.pathname,
@@ -49,7 +50,6 @@ class RuotePage {
       const ret = oldPushState.call(history, state, ...args)
       const config = this.getPopStateChangeEventData()
       this.lastLocation = stringify(location.href, args[1])
-      // this.storage.setItem('__tea_cache_refer_key', this.lastLocation)
       this.sendPv(config, 'pushState')
       return ret
     }
@@ -61,7 +61,6 @@ class RuotePage {
       const ret = oldReplaceState.call(history, state, ...args)
       const config = this.getPopStateChangeEventData()
       this.lastLocation = stringify(location.href, args[1])
-      // this.storage.setItem('__tea_cache_refer_key', this.lastLocation)
       this.sendPv(config)
       return ret
     }
@@ -108,7 +107,7 @@ class RuotePage {
       } else {
         refer = document.referrer
       }
-      if (this.storage.getItem(`__tea_cache_first_${this.appid}`)) {
+      if (this.storage.getItem(`__rangers_cache_first_${this.appid}`)) {
         is_first_time = false
       } else {
         is_first_time = true
@@ -137,18 +136,3 @@ class RuotePage {
   }
 }
 export default RuotePage
-
-/**@@SCRIPT
-try {
-  const exportRoute = (collect: any, config: any) => {
-    const route = new RuotePage()
-    route.apply(collect, config)
-  }
-  const pluginObject = getLogPluginSpace()
-  if (pluginObject) {
-    pluginObject.LogRoute = exportRoute
-  }
-} catch (e) {
-  console.log(e)
-}
-@@SCRIPT*/

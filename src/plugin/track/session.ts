@@ -1,3 +1,5 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import Cookies from 'js-cookie'
 
 export const COOKIE_KEY = '_TEA_VE_OPEN';
@@ -25,10 +27,10 @@ export function checkEditUrl(): string {
 
 export function setSession() {
   try {
-    const lang = (window.TEAVisualEditor.lang = window.TEAVisualEditor.lang || Cookies.get(COOKIE_LANG))
-    const apiHost = (window.TEAVisualEditor.__editor_ajax_domain = window.TEAVisualEditor.__editor_ajax_domain || Cookies.get(COOKIE_KEY_HOST))
-    const verison = (window.TEAVisualEditor.__editor_verison = window.TEAVisualEditor.__editor_verison || Cookies.get(COOKIE_EDIT_VERISON))
-    const editUrl = (window.TEAVisualEditor.__editor_url = window.TEAVisualEditor.__editor_url || Cookies.get(COOKIE_EDIT_URL))
+    const lang = (window.RANGERSVisualEditor.lang = window.RANGERSVisualEditor.lang || Cookies.get(COOKIE_LANG))
+    const apiHost = (window.RANGERSVisualEditor.__editor_ajax_domain = window.RANGERSVisualEditor.__editor_ajax_domain || Cookies.get(COOKIE_KEY_HOST))
+    const verison = (window.RANGERSVisualEditor.__editor_verison = window.RANGERSVisualEditor.__editor_verison || Cookies.get(COOKIE_EDIT_VERISON))
+    const editUrl = (window.RANGERSVisualEditor.__editor_url = window.RANGERSVisualEditor.__editor_url || Cookies.get(COOKIE_EDIT_URL))
     const timestamp = +new Date();
     const furureTimestamp = timestamp + 30 * 60 * 1000; // 30min
     const expires = new Date(furureTimestamp)

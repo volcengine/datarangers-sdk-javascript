@@ -1,3 +1,5 @@
+
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 import Cookies from 'js-cookie';
 class Memory {
   cache: any

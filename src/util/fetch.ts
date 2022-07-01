@@ -1,3 +1,5 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 const ERROR = {
   NO_URL: 4001,
   IMG_ON: 4000,

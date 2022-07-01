@@ -118,11 +118,8 @@ function getFullBundlesWithReplace(replaceObj, outputName) {
 
 export default [].concat(
   ...getFullBundlesWithReplace({
-    '/**@@SDK_TOC': '//',
-    '@@SDK_TOC*/': '//',
-    
-    '/**@@SDK_FULL': '//',
-    '@@SDK_FULL*/': '//',
+    '/**@@SDK': '//',
+    '@@SDK*/': '//',
   },
   '',
   )

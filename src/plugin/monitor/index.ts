@@ -1,7 +1,4 @@
-let  SDK_USE_TYPE = 'npm'
-/**@@SCRIPT
-SDK_USE_TYPE = 'script'
-@@SCRIPT*/
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 export default class Monitor {
   sdkReady: boolean
   config: any
@@ -35,7 +32,7 @@ export default class Monitor {
           app_id,
           app_name: app_name || '',
           sdk_version,
-          sdk_type: SDK_USE_TYPE,
+          sdk_type: 'script',
           sdk_config: this.config,
           sdk_desc: 'TOB'
         }),

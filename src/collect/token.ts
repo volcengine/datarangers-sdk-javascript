@@ -1,3 +1,4 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 import Types from './hooktype';
 import Storage from '../util/storage'
 import fetch from '../util/fetch'
@@ -23,7 +24,7 @@ export default class Token {
     this.config = config
     this.configManager = this.collect.configManager
     this.storage = new Storage(false)
-    this.tokenKey = `__tea_cache_tokens_${config.app_id}`
+    this.tokenKey = `__rangers_cache_tokens_${config.app_id}`
     this.enable_ttwebid = config.enable_ttwebid
     this.enableCustomWebid = config.enable_custom_webid
     this.collect.on(Types.ConfigUuid, (userUniqueId: string) => {

@@ -1,3 +1,5 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import getElementData from './element'
 import { ignore } from './dom'
 import { ParamsStruct } from './type'
@@ -40,12 +42,7 @@ export default class EventHandle {
   constructor(initConfig: any, options: any) {
     this.initConfig = initConfig
     this.options = options
-    this.eventName = options && options.custom === 'tea' ? {
-      click: '__bav_click',
-      page: '__bav_page',
-      beat: '__bav_beat',
-      static: '__bav_page_statistics'
-    } : {
+    this.eventName = {
       click: 'bav2b_click',
       page: 'bav2b_page',
       beat: 'bav2b_beat',
@@ -84,7 +81,7 @@ export default class EventHandle {
     data.page_total_width = window.innerWidth
     data.page_total_height = window.innerHeight
     try {
-      const cache = window.sessionStorage.getItem('_tea_cache_duration')
+      const cache = window.sessionStorage.getItem('_rangers_cache_duration')
       if (cache) {
         const duration = JSON.parse(cache)
         data.refer_page_duration_ms = duration ? duration.duration : ''

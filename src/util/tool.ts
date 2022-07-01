@@ -1,3 +1,5 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 // @ts-nocheck
 export const isObject = (obj: any) =>
   obj != null && Object.prototype.toString.call(obj) == '[object Object]';

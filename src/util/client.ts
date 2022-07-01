@@ -1,3 +1,5 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import UTM from './utm'
 import { parseURL, parseUrlQuery } from './tool'
 class Client {

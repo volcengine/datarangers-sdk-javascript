@@ -1,14 +1,16 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import { isArray } from '../../util/tool'
 export function isNeedElement(element:HTMLElement | null, type: string = 'list'): boolean {
   if (!element) return false
   if (type && type === 'list') {
     if (['LI','TR','DL'].includes(element.nodeName)) return true
-    if (element.dataset && element.dataset.hasOwnProperty('teaIdx')) return true
-    if (element.hasAttribute && element.hasAttribute('data-tea-idx')) return true
+    if (element.dataset && element.dataset.hasOwnProperty('rangersIdx')) return true
+    if (element.hasAttribute && element.hasAttribute('data-rangers-idx')) return true
   } else {
     if (['A', 'BUTTON'].includes(element.nodeName)) return true
-    if (element.dataset && element.dataset.hasOwnProperty('teaContainer')) return true
-    if (element.hasAttribute && element.hasAttribute('data-tea-container')) return true
+    if (element.dataset && element.dataset.hasOwnProperty('rangersContainer')) return true
+    if (element.hasAttribute && element.hasAttribute('data-rangers-container')) return true
     if (element.hasAttribute && hasAttributes(element, 'ss')) return true
   }
   return false
@@ -32,10 +34,10 @@ export function getNodeText(node:Node): string {
   let text = ''
   if (node.nodeType === 3) {
     text = node.textContent.trim()
-  } else if (node['dataset'] && node['dataset'].hasOwnProperty('teaTitle')) {
-    text = node['getAttribute']('data-tea-title')
-  } else if (node['hasAttribute']('ata-tea-title')) {
-    text = node['getAttribute']('data-tea-title')
+  } else if (node['dataset'] && node['dataset'].hasOwnProperty('rangersTitle')) {
+    text = node['getAttribute']('data-rangers-title')
+  } else if (node['hasAttribute']('ata-rangers-title')) {
+    text = node['getAttribute']('data-rangers-title')
   } else if (node['hasAttribute']('title')) {
     text = node['getAttribute']('title')
   } else if (node.nodeName === 'INPUT' && ['button', 'submit'].includes(node['getAttribute']('type'))) {
@@ -89,7 +91,7 @@ export function getTextSingle(element:HTMLElement):string {
 export function ignore(element:any): boolean {
   let _element = element
   while (_element && _element.parentNode) {
-    if (_element.hasAttribute('data-tea-ignore')) return true
+    if (_element.hasAttribute('data-rangers-ignore')) return true
     if (_element.nodeName === 'HTML' || _element.nodeName === 'body') return false
     _element = _element.parentNode
   }
