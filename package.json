@@ -4,7 +4,7 @@
   "scripts": {
     "nclean": "rimraf es lib core",
     "build": "export NODE_ENV=production && npm run nclean && npx rollup -c rollup.config.js",
-    "build-core": "export NODE_ENV=production && npm run nclean && npx rollup -c rollup.config.polyfill.js"
+    "build-core": "export NODE_ENV=production && npx rollup -c rollup.config.polyfill.js"
   },
   "license": "ISC",
   "dependencies": {
