@@ -1,8 +1,11 @@
 简体中文 | [English](./README.md)
 # `DataRangers SDK - Web端`
 ## 构建SDK
+
+```javascript
 npm install 
 npm run build
+```
 
 ## 使用方式
 

@@ -2,8 +2,11 @@ English | [简体中文](./README.zh-CN.md)
 
 # `DataRangers SDK - javascript`
 ## Sample
+
+```javascript
 npm install 
 npm run build
+```
 
 ## Sample
 
