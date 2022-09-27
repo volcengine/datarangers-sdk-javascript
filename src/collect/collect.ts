@@ -105,7 +105,7 @@ export default class Collector {
       initConfig.channel = 'cn'
     }
     this.inited = true
-    this.appBridge = new AppBridge(initConfig.Native)
+    this.appBridge = new AppBridge(initConfig.enable_native)
     this.bridgeReport = this.appBridge.bridgeInject()
     this.configManager = new ConfigManager(initConfig)
     this.initConfig = initConfig

@@ -12,7 +12,7 @@ export interface IInitParam {
   enable_stay_duration?: any;
   disable_route_report?: boolean;
   disable_session?: boolean;
-  disable_heartbeat?:boolean;
+  disable_heartbeat?: boolean;
   disable_auto_pv?: boolean;
   enable_spa?: boolean;
   user_unique_type?: string;
@@ -25,18 +25,17 @@ export interface IInitParam {
   cookie_domain?: string;
   enable_multilink?: boolean;
   multilink_timeout_ms?: number;
-  reportTime?: number;
+  report_time?: number; 1
   timeout?: number;
   max_report?: number;
   report_url?: string;
-  maxDuration?: number;
-  ab_channel_domain?:string;
-  configPersist?: number;
+  max_duration?: number; 2
+  ab_channel_domain?: string;
+  config_persist?: number; 3
   extend?: any;
   ab_timeout?: number;
-  Native?:boolean;
+  enable_native?: boolean;
   disable_tracer?: boolean;
-  extendConfig?: any;
   filter?: any;
   cep?: boolean;
   cep_url?: string;

@@ -29,7 +29,7 @@ export default class Event {
     this.cacheStorgae = new Storage(true)
     this.localStorage = new Storage(false)
     this.maxReport = config.max_report || 10
-    this.reportTime = config.reportTime || 30
+    this.reportTime = config.report_time || config.reportTime || 30
     this.timeout = config.timeout || 100000
     this.reportUrl = this.configManager.getUrl('event')
     this.eventKey = `__rangers_cache_events_${this.configManager.get('app_id')}`

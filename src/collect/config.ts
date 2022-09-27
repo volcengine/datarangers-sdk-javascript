@@ -39,9 +39,9 @@ export default class ConfigManager {
     this.configKey = `__rangers_cache_config_${initConfig.app_id}`
     this.sessionStorage = new Storage(false, 'session')
     this.localStorage = new Storage(false, 'local')
-    if (initConfig.configPersist) {
+    if (initConfig.config_persist) {
       this.configPersist = true
-      this.storage = initConfig.configPersist === 1 ? this.sessionStorage : this.localStorage
+      this.storage = initConfig.config_persist === 1 ? this.sessionStorage : this.localStorage
     }
     if (this.localStorage.getItem(firstKey)) {
       this.is_first_time = false

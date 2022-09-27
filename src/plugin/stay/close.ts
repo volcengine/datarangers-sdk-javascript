@@ -29,7 +29,7 @@ export default class Close {
   constructor(collect: any, config: any) {
     this.collect = collect
     this.config = config
-    this.maxDuration = config.maxDuration || 24 * 60 * 60 * 1000
+    this.maxDuration = config.max_duration || config.maxDuration || 24 * 60 * 60 * 1000
     this.pageStartTime = Date.now()
     if (isObject(config.enable_stay_duration)) {
       this.options = Object.assign(this.options, config.enable_stay_duration)
