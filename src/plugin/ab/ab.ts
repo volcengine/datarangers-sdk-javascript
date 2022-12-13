@@ -1,5 +1,9 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import { openOverlayer, closeOverlayer } from './layer';
+import { AB_DOMAINS } from '../../collect/constant'
+import '../../util/url-polyfill'
+import { DebuggerMesssge } from '../../collect/hooktype';
 import { getIframeUrl, isObject, parseUrlQuery, parseURL, decodeUrl } from '../../util/tool';
 import readyToLoadEditor, { loadVisual, loadMuiltlink } from './load';
 
@@ -24,11 +28,6 @@ interface ICallback {
 }
 const STORAGE_EXPRIRE = 1 * 30 * 24 * 60 * 60 * 1000;
 const API = '/service/2/abtest_config/';
-const DOMAINS = {
-  cn: '1fz22z22z1nz21z4mz4bz4bz18z19z22z1cz21z22z4az24z1mz1jz1az1cz18z1nz1nz1jz1mz1ez4az1az1mz1k',
-  va: '1fz22z22z1nz21z4mz4bz4bz22z1mz19z1jz1mz1ez4az1gz22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
-  sg: '1fz22z22z1nz21z4mz4bz4bz22z1mz19z1jz1mz1ez4az22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
-}
 export default class Ab {
   collect: any;
   config: any;
@@ -51,23 +50,34 @@ export default class Ab {
   fetch: any;
   readyStatus: boolean = false;
   types: any
+  ab_cross: boolean
+  ab_cookie_domain: string
+  exposureCache: any[] = [];
+  exposureLimit: number;
+  ab_batch_time: number
+  reportTimeout: any
   apply(collect: any, config: any) {
     this.collect = collect;
     this.config = config;
     if (!this.config.enable_ab_test) return;
-    const { enable_multilink, ab_channel_domain, enable_ab_visual } = config;
-    const abDomain = ab_channel_domain || decodeUrl(DOMAINS[config.channel || 'cn']);
+    const { enable_multilink, ab_channel_domain, enable_ab_visual, ab_cross, ab_cookie_domain, disable_ab_reset } = config;
+    const abDomain = ab_channel_domain || decodeUrl(AB_DOMAINS[config.channel || 'cn']);
     const { storage, fetch } = collect.adapters;
     this.cacheStorgae = new storage(false);
     this.fetch = fetch;
     this.enable_multilink = enable_multilink;
     this.enable_ab_visual = enable_ab_visual;
-    this.abKey =`__rangers_sdk_ab_version_${config.app_id}`
+    this.abKey = `__tea_sdk_ab_version_${config.app_id}`;
+    this.ab_cross = ab_cross;
+    this.ab_cookie_domain = ab_cookie_domain || '';
     this.fetchUrl = `${abDomain}${API}`;
     this.reportUrl = `${collect.configManager.getUrl('event')}`;
+    this.exposureLimit = config.exposure_limit || 20;
+    this.ab_batch_time = config.ab_batch_time || 500;
     const { Types } = this.collect;
     this.types = Types
     this.collect.on(Types.TokenChange, (tokenType: string) => {
+      if (disable_ab_reset) return;
       if (tokenType !== 'uuid') return;
       if (!this.readyStatus) return;
       this.clearCache();
@@ -88,6 +98,12 @@ export default class Ab {
     this.collect.on(Types.AbExternalVersion, (vids: string) => {
       this.setExternalAbVersion(vids);
     });
+    this.collect.on(Types.AbOpenLayer, () => {
+      this.openOverlayer();
+    });
+    this.collect.on(Types.AbCloseLayer, () => {
+      this.closeOverlayer();
+    });
 
     this.collect.on(
       Types.AbVersionChangeOn,
@@ -103,7 +119,7 @@ export default class Ab {
           this.changeListener.delete(cb);
         }
       }
-    ); 
+    );
     this.loadMode();
     (this.enable_ab_visual || this.enable_multilink) &&
       this.openOverlayer(this.config.multilink_timeout_ms || 500);
@@ -182,12 +198,14 @@ export default class Ab {
     return ''
   }
   updateVersions() {
-    const versions = this.extVersions.length
+    let versions = this.extVersions.length
       ? this.versions.concat(this.extVersions)
       : this.versions;
-    const finalVersion = versions.concat(this.mulilinkVersions)
-    this.configVersions(finalVersion.join(','));
-    this.updateABCache()
+    if (this.enable_multilink) {
+      versions = versions.concat(this.mulilinkVersions)
+    }
+    this.configVersions(versions.join(','));
+    this.updateABCache();
     this.changeListener.size > 0 &&
       this.changeListener.forEach((listener) => {
         if (typeof listener === 'function') {
@@ -245,8 +263,10 @@ export default class Ab {
       this.updateVersions();
       this.fechEvent(vid, key, defaultValue);
       callback(data[name].val);
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, secType: 'AB', info: `SDK 曝光了实验${name}`, level: 'info', time: Date.now(), data: data[name] })
       return;
     }
+    this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, secType: 'AB', info: 'SDK 调用getVar', level: 'info', time: Date.now(), data: defaultValue })
     callback(defaultValue);
   }
   getAllVars(callback: (data: IABData) => void) {
@@ -266,6 +286,7 @@ export default class Ab {
   getRealAllVars(item: ICallback) {
     const { callback } = item;
     callback(this.data ? JSON.parse(JSON.stringify(this.data)) : {});
+    this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, secType: 'AB', info: 'SDK 调用getAllVars', level: 'info', time: Date.now(), data: this.data })
   }
   fechEvent(vid: string, key: string, ab_url?: string) {
     try {
@@ -293,14 +314,35 @@ export default class Ab {
         if (window.navigator.sendBeacon) {
           window.navigator.sendBeacon(this.reportUrl, JSON.stringify([abData]));
         } else {
-          this.fetch(this.reportUrl, [abData], 20000);
+          this.reportExposure(abData);
         }
       } else {
-        setTimeout(() => {
-          this.fetch(this.reportUrl, [abData], 20000);
-        }, 16);
+        this.reportExposure(abData);
       }
-    } catch (e) {}
+    } catch (e) {
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
+    }
+  }
+  reportExposure(abData: any) {
+    this.exposureCache.push(abData);
+    if (this.reportTimeout) {
+      clearTimeout(this.reportTimeout);
+    }
+    if (this.exposureCache.length >= this.exposureLimit) {
+      this.report();
+    } else {
+      this.reportTimeout = setTimeout(() => {
+        this.report();
+        clearTimeout(this.reportTimeout);
+      }, this.ab_batch_time)
+    }
+  }
+  report() {
+    this.fetch(this.reportUrl, this.exposureCache, 20000);
+    this.exposureCache.forEach(item => {
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报成功', time: Date.now(), data: [item], code: 200, status: 'success' })
+    })
+    this.exposureCache = [];
   }
   setExternalAbVersion(vid: string) {
     this.extVersions = [vid];
@@ -313,6 +355,22 @@ export default class Ab {
     }
     this.fetchAB(callback);
   }
+  get(key: string) {
+    if (this.ab_cross) {
+      const ab_cookie = this.cacheStorgae.getCookie(key, this.ab_cookie_domain);
+      return ab_cookie ? JSON.parse(ab_cookie) : null;
+    } else {
+      return this.cacheStorgae.getItem(key);
+    }
+  }
+  set(key: string, data: any) {
+    if (this.ab_cross) {
+      this.cacheStorgae.setCookie(key, data, STORAGE_EXPRIRE, this.ab_cookie_domain);
+    } else {
+      this.cacheStorgae.setItem(key, data);
+    }
+    this.collect.configManager.setAbCache(data);
+  }
   getABCache(key?: string) {
     let data = {
       ab_version: [],
@@ -322,7 +380,7 @@ export default class Ab {
       timestamp: +new Date(),
       uuid: ''
     };
-    data = this.cacheStorgae.getItem(this.abKey) || data;
+    data = this.get(this.abKey) || data;
     if (Date.now() - data.timestamp >= STORAGE_EXPRIRE) {
       this.cacheStorgae.removeItem(this.abKey);
       return null;
@@ -338,14 +396,14 @@ export default class Ab {
     cache.ab_ext_version = this.extVersions;
     cache.ab_version = this.versions;
     cache.timestamp = Date.now();
-    this.cacheStorgae.setItem(this.abKey, cache);
+    this.set(this.abKey, cache);
   }
   setAbCache(uuid?: string) {
     const cache = this.getABCache();
     cache.data = this.data;
     cache.uuid = uuid
     cache.timestamp = Date.now();
-    this.cacheStorgae.setItem(this.abKey, cache);
+    this.set(this.abKey, cache);
   }
   clearCache() {
     this.refreshFetchStatus = 'ing'
@@ -369,7 +427,7 @@ export default class Ab {
   fetchComplete(abData: any, uuid: string) {
     if (abData && Object.prototype.toString.call(abData) == '[object Object]') {
       this.data = abData;
-      this.setAbCache(uuid) 
+      this.setAbCache(uuid)
       const versions = [];
       Object.keys(abData).forEach((key) => {
         const { vid } = abData[key];
@@ -383,6 +441,7 @@ export default class Ab {
         if (this.collect.destroyInstance) return;
         this.getVar('$ab_modification', window.location.href, () => {
           loadVisual($ab_modification.val);
+          this.closeOverlayer();
         });
       } else if ($ab_url && this.enable_multilink) {
         this.mulilinkVersions = this.mulilinkVersions.filter((vid) => versions.includes(vid));
@@ -396,18 +455,29 @@ export default class Ab {
                 let jump = `${val}`;
                 jump = jump.indexOf('http') === -1 ? `https://${jump}` : jump;
                 const newhost = parseURL(jump).host
-                if (newhost !== location.host) {
-                  // 跳转的是一个新域名
-                  jump = `${jump}&vid=${vid}`
+                try {
+                  const urlObj = new URL(jump)
+                  if (newhost !== location.host) {
+                    // 跳转的是一个新域名
+                    urlObj.searchParams.append('vid', vid)
+                  } else {
+                    // 不同的域名不能replace
+                    window.history.replaceState('', '', jump);
+                  }
+                  window.location.href = urlObj.href;
+                } catch (e) {
+                  window.location.href = jump;
                 }
-                window.location.href = jump;
               }, 100);
+            } else {
+              this.closeOverlayer();
             }
           });
         }
       }
-      this.closeOverlayer();
       this.updateVersions();
+    } else {
+      this.closeOverlayer();
     }
     this.callbacks.forEach((item) =>
       this[item.type === CallbackType.Var ? 'getRealVar' : 'getRealAllVars'](
@@ -418,24 +488,24 @@ export default class Ab {
     this.callbacks = [];
   }
   fetchAB(callback?: any) {
-    let ab_url = window.location.href;
     const env = this.collect.configManager.get();
-    this.fetch(
-      this.fetchUrl,
-      {
-        header: {
-          aid: this.config.app_id,
-          ...(env.user || {}),
-          ...(env.header || {}),
-          ab_sdk_version: this.collect.configManager.getAbVersion(),
-          ab_url,
-        },
+    const requestBody = {
+      header: {
+        aid: this.config.app_id,
+        ...(env.user || {}),
+        ...(env.header || {}),
+        ab_sdk_version: this.collect.configManager.getAbVersion(),
+        ab_url: window.location.href
       },
+    }
+    this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 发起AB实验请求', level: 'info', logType: 'fetch', time: Date.now(), data: requestBody })
+    this.fetch(
+      this.fetchUrl, requestBody,
       this.config.ab_timeout || 3000,
       false,
       (response) => {
         this.fetchStatus = 'complete';
-        this.refreshFetchStatus === 'complete';
+        this.refreshFetchStatus = 'complete';
         const { data, message } = response; // 解析出code
         if (message === 'success') {
           this.fetchComplete(data, env.user.user_unique_id);
@@ -445,12 +515,15 @@ export default class Ab {
           callback && callback(null);
         }
         this.collect.emit(this.types.AbComplete, data)
+        this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, secType: 'AB', info: 'AB实验请求成功', level: 'info', logType: 'fetch', time: Date.now(), data: data })
       },
       () => {
         this.fetchStatus = 'complete';
-        this.refreshFetchStatus === 'complete';
+        this.refreshFetchStatus = 'complete';
         this.fetchComplete(null, env.user.user_unique_id);
         callback && callback(null);
+        this.collect.emit(this.types.AbTimeout)
+        this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, secType: 'AB', info: 'AB实验请求网络异常', level: 'error', logType: 'fetch', time: Date.now() })
       }
     );
   }
@@ -464,7 +537,7 @@ export default class Ab {
       }
       let reg = new RegExp(_reg, 'g');
       url = url.replace(reg, '');
-    } catch (e) {}
+    } catch (e) { }
     return url;
   }
 }

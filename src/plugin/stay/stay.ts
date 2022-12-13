@@ -2,6 +2,7 @@
 
 import Alive from './alive'
 import Close from './close'
+import { DebuggerMesssge } from '../../collect/hooktype'
 
 export default class Stay {
   collect: any
@@ -21,7 +22,7 @@ export default class Stay {
     this.pageAlive = new Alive(collect, config)
     this.pageClose = new Close(collect, config)
     const { Types } = this.collect
-    this.collect.on(Types.ResetStay, ({url_path, title, url}) => {
+    this.collect.on(Types.ResetStay, ({ url_path, title, url }) => {
       this.resetStayDuration(url_path, title, url)
     })
     this.collect.on(Types.RouteChange, (info) => {
@@ -29,7 +30,7 @@ export default class Stay {
       if (config.disable_route_report) return;
       this.resetStayDuration()
     })
-    this.collect.on(Types.SetStay, ({url_path, title, url}) => {
+    this.collect.on(Types.SetStay, ({ url_path, title, url }) => {
       this.setStayParmas(url_path, title, url)
     })
     this.enable(this.url_path, this.title, this.url)
@@ -62,6 +63,7 @@ export default class Stay {
     // 专门用来设置stay的参数
     this.pageAlive.setParams(url_path, title, url)
     this.pageClose.setParams(url_path, title, url)
+    this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 执行 resetStayParams', level: 'info', time: Date.now(), data: { url_path, title, url } })
   }
   reset(url_path: string, title: string, url: string) {
     this.disable()
@@ -69,5 +71,6 @@ export default class Stay {
   }
   resetStayDuration(url_path?: string, title?: string, url?: string) {
     this.reset(url_path, title, url)
+    this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 执行 resetStayDuration', level: 'info', time: Date.now(), data: { url_path, title, url } })
   }
 }

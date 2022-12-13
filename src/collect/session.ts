@@ -1,4 +1,5 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import Types from './hooktype'
 import Storage from '../util/storage'
 
@@ -7,10 +8,10 @@ interface SessionCacheType {
   timestamp: number
 }
 
-const sessionId = () =>  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+const sessionId = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
   const r = (Math.random() * 16) | 0;
   const v = c === 'x' ? r : (r & 0x3) | 0x8;
-  return v.toString(16);  
+  return v.toString(16);
 })
 
 export default class Session {
@@ -23,7 +24,7 @@ export default class Session {
   apply(collect: any, config: any) {
     this.collect = collect
     this.storage = new Storage(false, 'session')
-    this.sessionKey =  `__rangers_session_id_${config.app_id}`
+    this.sessionKey = `__tea_session_id_${config.app_id}`
     this.expireTime = config.expireTime || 30 * 60 * 1000
     this.disableSession = config.disable_session
     if (this.disableSession) return
@@ -63,7 +64,7 @@ export default class Session {
       }
     }
     this.storage.setItem(this.sessionKey, sessionCache)
-    this.sessionExp = setInterval(()=>{
+    this.sessionExp = setInterval(() => {
       this.checkEXp()
     }, this.expireTime)
   }
@@ -81,7 +82,7 @@ export default class Session {
   resetExpTime() {
     if (this.sessionExp) {
       clearInterval(this.sessionExp)
-      this.sessionExp = setInterval(()=>{
+      this.sessionExp = setInterval(() => {
         this.checkEXp()
       }, this.expireTime)
     }

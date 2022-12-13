@@ -9,7 +9,7 @@ const ERROR = {
   RESPONSE: 5001,
   TIMEOUT: 5005,
 }
-export default function fetch(url:string, data:any, timeout?: number, withCredentials?: boolean, success?:any, fail?:any, app_key?:string, method?:string): void {
+export default function fetch(url: string, data: any, timeout?: number, withCredentials?: boolean, success?: any, fail?: any, app_key?: string, method?: string, encryption?: boolean): void {
   try {
     var xhr = new XMLHttpRequest()
     var _method = method || 'POST'
@@ -33,7 +33,7 @@ export default function fetch(url:string, data:any, timeout?: number, withCreden
         if (xhr.responseText) {
           try {
             res = JSON.parse(xhr.responseText)
-          } catch(e) {
+          } catch (e) {
             res = {}
           }
           success(res, data)
@@ -44,6 +44,10 @@ export default function fetch(url:string, data:any, timeout?: number, withCreden
       xhr.abort()
       fail && fail(data, ERROR.XHR_ON)
     }
-    xhr.send(JSON.stringify(data))
-  } catch (e) {}
+    if (encryption) {
+      xhr.send(data)
+    } else {
+      xhr.send(JSON.stringify(data))
+    }
+  } catch (e) { }
 }

@@ -1,6 +1,7 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+import { DebuggerMesssge } from '../../collect/hooktype'
 
-import { stringify } from '../../util/tool';
+
 
 class RuotePage {
   storage: any
@@ -13,13 +14,15 @@ class RuotePage {
   cache_key: string
   cache: any = {}
   appid: number
-  apply(collect: any, config:any) {
+  allowHash: boolean = false
+  apply(collect: any, config: any) {
     if (!config.spa && !config.autotrack) return;
     this.collect = collect
     this.config = config
     this.appid = config.app_id
+    this.allowHash = config.allow_hash
     this.fncArray = new Map()
-    this.setKey() 
+    this.setKey()
     this.setLocation()
     this.hack()
     this.init()
@@ -30,7 +33,7 @@ class RuotePage {
   setKey() {
     const { storage } = this.collect.adapters;
     this.storage = new storage(false)
-    this.cache_key = `__rangers_cache_refer_${this.appid}`
+    this.cache_key = `__tea_cache_refer_${this.appid}`
     this.cache = {
       refer_key: location.href,
       refer_title: document.title || location.pathname,
@@ -48,19 +51,23 @@ class RuotePage {
         history['onpushstate']({ state })
       }
       const ret = oldPushState.call(history, state, ...args)
+      if (this.lastLocation === location.href) return;
       const config = this.getPopStateChangeEventData()
-      this.lastLocation = stringify(location.href, args[1])
+      this.lastLocation = location.href;
+      // this.lastLocation = stringify(location.href, args[1])
       this.sendPv(config, 'pushState')
       return ret
     }
     const oldReplaceState = history.replaceState
-    history.replaceState = (state, ...args) =>{
+    history.replaceState = (state, ...args) => {
       if (typeof history['onreplacestate'] === 'function') {
         history['onreplacestate']({ state })
       }
       const ret = oldReplaceState.call(history, state, ...args)
+      if (this.lastLocation === location.href) return;
       const config = this.getPopStateChangeEventData()
-      this.lastLocation = stringify(location.href, args[1])
+      // this.lastLocation = stringify(location.href, args[1])
+      this.lastLocation = location.href;
       this.sendPv(config)
       return ret
     }
@@ -72,7 +79,7 @@ class RuotePage {
   }
   init() {
     const config = this.getPopStateChangeEventData()
-    this.collect.emit('route-change', {config, init: true})
+    this.collect.emit('route-change', { config, init: true })
   }
   listener() {
     let timeoutId = null
@@ -80,6 +87,11 @@ class RuotePage {
     window.addEventListener('hashchange', (e) => {
       if (this.lastLocation === window.location.href) return
       clearTimeout(timeoutId)
+      if (this.allowHash) { // hash变化带来的pv
+        this.lastLocation = window.location.href;
+        const config = this.getPopStateChangeEventData();
+        this.sendPv(config);
+      }
     });
     window.addEventListener('popstate', (e) => {
       if (this.lastLocation === window.location.href) {
@@ -107,7 +119,8 @@ class RuotePage {
       } else {
         refer = document.referrer
       }
-      if (this.storage.getItem(`__rangers_cache_first_${this.appid}`)) {
+      const firstStatus = this.storage.getItem(`__tea_cache_first_${this.appid}`)
+      if (firstStatus && firstStatus == 1) {
         is_first_time = false
       } else {
         is_first_time = true
@@ -127,12 +140,13 @@ class RuotePage {
         is_first_time: `${is_first_time}`
       }
     } catch (e) {
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
       return {}
     }
-    
+
   }
   sendPv(config: any, name?: string) {
-    this.collect.emit('route-change', {config, init: false})
+    this.collect.emit('route-change', { config, init: false })
   }
 }
 export default RuotePage

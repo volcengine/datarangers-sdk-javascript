@@ -1,5 +1,8 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 
+import { DebuggerMesssge } from '../../collect/hooktype'
+import EventCheck from '../check/check'
+
 interface ProfileParams {
   [key: string]: string | number | Array<any>;
 }
@@ -14,6 +17,7 @@ export default class Profile {
   duration: number
   reportUrl: string
   fetch: any
+  eventCheck: any
   apply(collect: any, config: any) {
     this.collect = collect
     this.config = config
@@ -21,6 +25,7 @@ export default class Profile {
     this.reportUrl = `${collect.configManager.getDomain()}/profile/list`
     const { Types } = collect
     const { fetch } = collect.adapters
+    this.eventCheck = new EventCheck(collect, config)
     this.fetch = fetch
     this.cache = {}
     this.collect.on(Types.ProfileSet, (params) => {
@@ -62,9 +67,12 @@ export default class Profile {
       if (this.config.disable_track_event) return;
       let profileEvent = []
       profileEvent.push(this.collect.processEvent(eventName, params))
-      let data = this.collect.eventManager.merge(profileEvent)
+      let data = this.collect.eventManager.merge(profileEvent, true)
       this.fetch(this.reportUrl, data)
-    } catch (e) {}
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报成功', time: Date.now(), data: data, code: 200, status: 'success' })
+    } catch (e) {
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
+    }
   }
   setProfile(params: ProfileParams): void {
     const result = this.formatParams(params);
@@ -116,7 +124,7 @@ export default class Profile {
       return;
     }
     let _params = {}
-    for(let key in params) {
+    for (let key in params) {
       if (typeof params[key] !== 'string' && Object.prototype.toString.call(params[key]).slice(8, -1) !== 'Array') {
         console.warn(`please check the value of param: ${key}, must be string or array !!!`)
         continue;
@@ -139,7 +147,7 @@ export default class Profile {
       };
     });
   }
-  formatParams(params: ProfileParams, once: boolean = false):ProfileParams | undefined {
+  formatParams(params: ProfileParams, once: boolean = false): ProfileParams | undefined {
     try {
       if (
         !params ||
@@ -163,22 +171,23 @@ export default class Profile {
       }
       const now = Date.now();
       return keys.filter((key) => {
-          const cached = this.cache[key];
-          if (once) {
-            if (cached) return false;
-            return true;
-          } else {
-            if (cached && this.compare(cached.val, params[key]) && (now - cached.timestamp < this.duration)) {
-              return false;
-            }
-            return true;
+        const cached = this.cache[key];
+        if (once) {
+          if (cached) return false;
+          return true;
+        } else {
+          if (cached && this.compare(cached.val, params[key]) && (now - cached.timestamp < this.duration)) {
+            return false;
           }
-        })
+          return true;
+        }
+      })
         .reduce((res, current) => {
           res[current] = _params[current];
           return res;
         }, {});
-    } catch(e) {
+    } catch (e) {
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
       console.log('error')
     }
   }
@@ -187,14 +196,16 @@ export default class Profile {
     try {
       return JSON.stringify(newValue) === JSON.stringify(oldValue);
     } catch (e) {
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
       return false;
     }
-    
+
   }
   clone(value: any) {
     try {
       return JSON.parse(JSON.stringify(value));
     } catch (e) {
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
       return value;
     }
   }

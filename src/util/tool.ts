@@ -41,18 +41,32 @@ const decrypto = (str, xor, hex) => {
   return resultStr;
 }
 
+export const encodeBase64 = (string) => {
+  if (window.btoa) {
+    return window.btoa(encodeURIComponent(string));
+  }
+  return encodeURIComponent(string);
+}
+
+export const decodeBase64 = (string) => {
+  if (window.atob) {
+    return decodeURIComponent(window.atob(string));
+  }
+  return decodeURIComponent(string);
+}
+
 export const decodeUrl = string => decrypto(string, 64, 25);
 
 export const beforePageUnload = (fn) => {
   var isiOS = !!navigator.userAgent.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/)
   if (isiOS) {
-    window.addEventListener("pagehide", fn, false) 
+    window.addEventListener("pagehide", fn, false)
   } else {
     window.addEventListener("beforeunload", fn, false)
   }
 }
 
-export const getIframeUrl = function() { 
+export const getIframeUrl = function () {
   try {
     var name = JSON.parse(atob(window.name))
     if (name) {
@@ -60,7 +74,7 @@ export const getIframeUrl = function() {
     } else {
       return undefined
     }
-  } catch(e) {
+  } catch (e) {
     return undefined
   }
 }
@@ -88,11 +102,11 @@ export const loadScript = (src, success, error) => {
   const script = document.createElement('script');
   script.src = src;
 
-  script.onerror = function() {
+  script.onerror = function () {
     error(src);
   };
 
-  script.onload = function() {
+  script.onload = function () {
     success();
   };
 
@@ -109,7 +123,7 @@ export const isSupVisChange = () => {
   return flag
 }
 
-export const selfAdjust = (cb = () => undefined, interval = 1000) =>{
+export const selfAdjust = (cb = () => undefined, interval = 1000) => {
   let expected = Date.now() + interval
   let timerHander: number
   function step() {
@@ -151,7 +165,7 @@ export const parseUrlQuery = (url: string) => {
   try {
     let queryString = parseURL(url).search
     queryString = queryString.slice(1)
-    queryString.split('&').forEach(function(keyValue){
+    queryString.split('&').forEach(function (keyValue) {
       let _keyValue = keyValue.split('=')
       let key
       let value
@@ -161,15 +175,15 @@ export const parseUrlQuery = (url: string) => {
       }
       try {
         queryObj[key] = decodeURIComponent(typeof value === 'undefined' ? '' : value)
-      } catch(e) {
+      } catch (e) {
         queryObj[key] = value
       }
     })
-  } catch (e) {}
+  } catch (e) { }
   return queryObj
 }
 
-export const hashCode = (str: string): number =>{
+export const hashCode = (str: string): number => {
   str += '';
   let h = 0;
   let off = 0;

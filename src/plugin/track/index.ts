@@ -1,10 +1,12 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import Listener from './listener'
-import Config , { defaultConfig } from './config'
+import Config, { defaultConfig } from './config'
 import EventHandle from './event'
 import Request from './request'
 import { OptionsType, EventInfo } from './type'
 import readyToLoadEditor from './load'
+import Exposure from './exposure'
 
 const defaultOpt = {
   hashTag: false,
@@ -15,13 +17,14 @@ export default class AutoTrack {
   Listener: Listener
   EventHandle: EventHandle
   Request: Request
+  Exposure: Exposure
   Config: Config
   options: OptionsType
   destroyed: boolean
   autoTrackStart: boolean
   collect: any
   config: any
-  apply(collect: any, config: any){
+  apply(collect: any, config: any) {
     this.autoTrackStart = false
     this.collect = collect
     this.config = config
@@ -40,7 +43,8 @@ export default class AutoTrack {
     options = Object.assign(defaultOpt, options)
     this.destroyed = false
     this.options = options
-    this.Config = new Config(defaultConfig)
+    this.Config = new Config(defaultConfig, this.options)
+    this.Exposure = new Exposure(this.config, this.handle.bind(this))
     this.Listener = new Listener(options, this.collect, this.Config)
     this.EventHandle = new EventHandle(this.config, options)
     this.Request = new Request(this.collect)
@@ -51,7 +55,7 @@ export default class AutoTrack {
   init() {
     this.Listener.init(this.handle.bind(this))
   }
-  handle( _eventInfo: EventInfo, _data?: any) {
+  handle(_eventInfo: EventInfo, _data?: any) {
     const { eventType } = _eventInfo
     if (eventType === 'dom') {
       this.handleDom(_eventInfo, _data)
@@ -60,7 +64,7 @@ export default class AutoTrack {
   handleDom(eventInfo: EventInfo, data: any) {
     try {
       const { eventName } = eventInfo
-      if (eventName === 'click' || eventName === 'change' || eventName === 'submit') {
+      if (eventName === 'click' || eventName === 'exposure' || eventName === 'change' || eventName === 'submit') {
         const handleResult = this.EventHandle.handleEvent(data, eventName)
         handleResult !== null && this.Request.send({ eventType: 'custom', eventName: `report_${eventName}_event`, extra: { methods: 'GET' } }, handleResult)
       } else if (eventName === 'page_view' || eventName === 'page_statistics') {
@@ -76,10 +80,10 @@ export default class AutoTrack {
         const { eventSend } = eventInfo
         this.Request.send({ eventType: 'custom', eventName: 'report_${eventName}_event', extra: { methods: 'GET' }, eventSend }, beatData)
       }
-    } catch(e){
+    } catch (e) {
       console.log(`handel dom event error ${JSON.stringify(e)}`)
     }
-    
+
   }
   destroy() {
     if (!this.autoTrackStart) {

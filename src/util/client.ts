@@ -59,7 +59,7 @@ class Client {
         $latest_search_keyword = referQuery['keyword']
       }
     }
-    return {$latest_referrer, $latest_referrer_host, $latest_search_keyword, isLast}  
+    return { $latest_referrer, $latest_referrer_host, $latest_search_keyword, isLast }
   }
   browser() {
     let browser = ''
@@ -70,10 +70,10 @@ class Client {
     if (userAgent.indexOf('Edge') !== -1 || userAgent.indexOf('Edg') !== -1) {
       browser = 'Microsoft Edge'
       if (userAgent.indexOf('Edge') !== -1) {
-        versionOffset = userAgent.indexOf('Edge') 
+        versionOffset = userAgent.indexOf('Edge')
         browser_version = userAgent.substring(versionOffset + 5)
       } else {
-        versionOffset = userAgent.indexOf('Edg') 
+        versionOffset = userAgent.indexOf('Edg')
         browser_version = userAgent.substring(versionOffset + 4)
       }
     } else if ((versionOffset = userAgent.indexOf('MSIE')) !== -1) {
@@ -121,10 +121,10 @@ class Client {
       } else if ((versionOffset = userAgent.indexOf('TTWebView')) !== -1) {
         browser = 'TTWebView'
         browser_version = userAgent.substring(versionOffset + 10, versionOffset + 23)
-      } else if ((versionOffset = userAgent.indexOf('Chrome')) !== -1){
+      } else if ((versionOffset = userAgent.indexOf('Chrome')) !== -1) {
         browser = 'Chrome'
         browser_version = userAgent.substring(versionOffset + 7)
-      } else if ((versionOffset = userAgent.indexOf('Chrome')) !== -1){
+      } else if ((versionOffset = userAgent.indexOf('Chrome')) !== -1) {
         browser = 'Chrome'
         browser_version = userAgent.substring(versionOffset + 7)
       }
@@ -132,7 +132,7 @@ class Client {
       if ((versionOffset = userAgent.indexOf('QQ')) !== -1) {
         browser = 'qqbrowser'
         browser_version = userAgent.substring(versionOffset + 10, versionOffset + 16)
-      } else if((versionOffset = userAgent.indexOf('Safari')) !== -1){
+      } else if ((versionOffset = userAgent.indexOf('Safari')) !== -1) {
         browser = 'Safari'
         browser_version = userAgent.substring(versionOffset + 7)
         if ((versionOffset = userAgent.indexOf('Version')) !== -1) {
@@ -148,6 +148,12 @@ class Client {
     } else if ((versionOffset = userAgent.indexOf('QQ')) !== -1) {
       browser = 'qqbrowser'
       browser_version = userAgent.substring(versionOffset + 3, versionOffset + 8)
+    } else if ((versionOffset = userAgent.indexOf('Opera')) !== -1) {
+      browser = 'Opera'
+      browser_version = userAgent.substring(versionOffset + 6)
+      if ((versionOffset = userAgent.indexOf('Version')) !== -1) {
+        browser_version = userAgent.substring(versionOffset + 8)
+      }
     }
     if ((semiIndex = browser_version.indexOf(';')) !== -1) {
       browser_version = browser_version.substring(0, semiIndex)
@@ -235,7 +241,7 @@ class Client {
       os_version = getVersion(/Windows (.*)/, os_name)
       os_name = 'windows'
     }
-    
+
     const getAndroidVersion = (ua) => {
       let version = getVersion(/Android ([\.\_\d]+)/, ua)
       if (!version) {
@@ -273,14 +279,14 @@ class Client {
     try {
       if (osName === 'android') {
         const tempArray = navigator.userAgent.split(';')
-        tempArray.forEach(function(item){
+        tempArray.forEach(function (item) {
           if (item.indexOf('Build/') > -1) {
             model = item.slice(0, item.indexOf('Build/'))
           }
         })
       } else if (osName === 'ios' || osName === 'mac' || osName === 'windows') {
         if (this.isNewIpad()) {
-           model = 'iPad'
+          model = 'iPad'
         } else {
           const temp = navigator.userAgent.replace('Mozilla/5.0 (', '')
           const firstSeperatorIndex = temp.indexOf(';')
@@ -294,7 +300,7 @@ class Client {
   }
   isNewIpad() {
     return this.userAgent !== undefined && navigator.platform === 'MacIntel'
-          && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1
+      && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1
   }
 }
 export default Client

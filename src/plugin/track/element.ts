@@ -9,7 +9,7 @@ interface ElementData {
   texts: Array<string>
   element_width?: number
   element_height?: number
-  touch_x?:number
+  touch_x?: number
   touch_y?: number
   href?: string
   src?: string
@@ -40,8 +40,8 @@ export default function getElementData(event: any, element: HTMLElement, options
   const since_page_start_ms = Date.now() - page_start_ms
   const _position = positions.map(item => `${item}`)
   let elementObj = null
-  if (window.RANGERSVisualEditor.getOriginXpath) {
-    elementObj = window.RANGERSVisualEditor.getOriginXpath({
+  if (window.TEAVisualEditor.getOriginXpath) {
+    elementObj = window.TEAVisualEditor.getOriginXpath({
       xpath: element_path,
       positions: _position
     })

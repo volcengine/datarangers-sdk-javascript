@@ -44,7 +44,7 @@ export default class Listener {
       }
       if (this.config.beat) {
         try {
-          if (document.readyState === 'complete') {  
+          if (document.readyState === 'complete') {
             this.beatEvent(this.beatTime)
           } else {
             window.addEventListener('load', () => {
@@ -61,17 +61,17 @@ export default class Listener {
           })
           const isScrollEnd = () => {
             t2 = document.documentElement.scrollTop || document.body.scrollTop;
-            if(t2 == t1){
+            if (t2 == t1) {
               this.eventHandel({ eventType: 'dom', eventName: 'beat' }, {
                 beat_type: 1
               })
             }
           }
-        } catch(e) {}
+        } catch (e) { }
         try {
           var entryList = window.performance && window.performance.getEntriesByType('paint')
           if (entryList && entryList.length) {
-            var observer = new PerformanceObserver((entryList) =>{
+            var observer = new PerformanceObserver((entryList) => {
               var entries = entryList.getEntries();
               var lastEntry = entries[entries.length - 1];
               var lcp = lastEntry['renderTime'] || lastEntry['loadTime'];
@@ -92,7 +92,7 @@ export default class Listener {
           } else {
             this.getPageLoadEvent(0)
           }
-        } catch(e) {
+        } catch (e) {
           this.getPageLoadEvent(0)
         }
       }
@@ -121,7 +121,7 @@ export default class Listener {
       })
       let beaInterval
       if (this.beatTime) {
-        beaInterval = setInterval(()=>{
+        beaInterval = setInterval(() => {
           this.eventHandel({ eventType: 'dom', eventName: 'beat' }, {
             beat_type: 2
           })
@@ -131,15 +131,15 @@ export default class Listener {
         this.eventHandel({ eventType: 'dom', eventName: 'beat', eventSend: 'becon' }, {
           beat_type: 0
         })
-        if(this.beatTime) {
+        if (this.beatTime) {
           clearInterval(beaInterval)
         }
       })
-    } catch(e) {}
+    } catch (e) { }
   }
   getPageViewEvent = (eventData: Object, name?: string) => {
     if (name && name === 'pushState') {
-      this.eventHandel({ eventType: 'dom', eventName: 'beat'}, {
+      this.eventHandel({ eventType: 'dom', eventName: 'beat' }, {
         beat_type: 0,
         ...eventData
       })
@@ -147,6 +147,6 @@ export default class Listener {
     this.eventHandel({ eventType: 'dom', eventName: 'page_view' }, eventData)
   }
   getPageLoadEvent = (lcp: any) => {
-    this.eventHandel({ eventType: 'dom', eventName: 'page_statistics' }, {lcp:lcp})
+    this.eventHandel({ eventType: 'dom', eventName: 'page_statistics' }, { lcp: lcp })
   }
 }

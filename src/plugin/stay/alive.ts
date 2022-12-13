@@ -1,4 +1,5 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import { isSupVisChange, beforePageUnload, isObject } from '../../util/tool'
 interface Option {
   aliveName?: string,
@@ -20,7 +21,7 @@ export default class Alive {
   aliveDTime: number = 60 * 1000
   aliveName: string
   disableCallback: any
-  options: Option = { aliveName: 'predefine_page_alive', params : {}}
+  options: Option = { aliveName: 'predefine_page_alive', params: {} }
   constructor(collect: any, config: any) {
     this.collect = collect
     this.config = config
@@ -48,9 +49,9 @@ export default class Alive {
     this.pageStartTime = Date.now()
   }
 
-  sendEvent(isTimeLimited = false) {
-    const duration = isTimeLimited ? this.aliveDTime : Date.now() - this.sessionStartTime
-    if (duration < 0 || (Date.now() - this.pageStartTime > this.maxDuration)) {
+  sendEvent(leave: boolean, limited = false) {
+    const duration = limited ? this.aliveDTime : Date.now() - this.sessionStartTime
+    if (duration < 0 || duration > this.aliveDTime || (Date.now() - this.pageStartTime > this.maxDuration)) {
       return
     }
     this.collect.beconEvent(this.options.aliveName, {
@@ -60,13 +61,15 @@ export default class Alive {
       duration: duration,
       is_support_visibility_change: isSupVisChange(),
       startTime: this.sessionStartTime,
+      hidden: document.visibilityState,
+      leave,
       ...this.options.params
     })
     this.sessionStartTime = Date.now()
   }
 
   getParams(type: string) {
-    switch(type) {
+    switch (type) {
       case 'url_path':
         return this.set_path || this.url_path || location.pathname
       case 'title':
@@ -79,7 +82,7 @@ export default class Alive {
     if (this.timerHandler) clearInterval(this.timerHandler)
     return setInterval(() => {
       if (Date.now() - this.sessionStartTime > this.aliveDTime) {
-        this.sendEvent(true)
+        this.sendEvent(false, true)
       }
     }, 1000)
   }
@@ -88,7 +91,7 @@ export default class Alive {
     if (document.visibilityState === 'hidden') {
       if (this.timerHandler) {
         clearInterval(this.timerHandler)
-        this.sendEvent()
+        this.sendEvent(false)
       }
     } else if (document.visibilityState === 'visible') {
       // 重置时间
@@ -99,7 +102,7 @@ export default class Alive {
 
   beforeunload() {
     if (!document.hidden) {
-      this.sendEvent()
+      this.sendEvent(true)
     }
   }
   enablePageAlive() {

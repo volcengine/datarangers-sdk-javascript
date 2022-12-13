@@ -20,16 +20,16 @@ export function getEventData(event: any = {}, extData: any = {}) {
   const { clientX, clientY } = event
   const { left, top } = extData
   const touchX = clientX - left >= 0 ? clientX - left : 0
-  const touchY = clientY - top >=0 ? clientY - top : 0
+  const touchY = clientY - top >= 0 ? clientY - top : 0
   return {
     touch_x: Math.floor(touchX),
     touch_y: Math.floor(touchY),
   }
 }
 
-export function getXpath(target: HTMLElement): {element_path: string, positions: Array<number>} {
+export function getXpath(target: HTMLElement): { element_path: string, positions: Array<number> } {
   const targetList = []
-  while(target.parentElement !== null) {
+  while (target.parentElement !== null) {
     targetList.push(target)
     target = target.parentElement
   }
@@ -37,22 +37,22 @@ export function getXpath(target: HTMLElement): {element_path: string, positions:
   let xpathArr: Array<string> = []
   const positions: Array<number> = []
   targetList.forEach(cur => {
-    const { str,index } = getXpathIndex(cur)
+    const { str, index } = getXpathIndex(cur)
     xpathArr.unshift(str)
     positions.unshift(index)
   })
-  return { element_path: `/${xpathArr.join('/')}`, positions}
+  return { element_path: `/${xpathArr.join('/')}`, positions }
 }
 
-function getXpathIndex (dom:HTMLElement):{str: string, index:number} {
+function getXpathIndex(dom: HTMLElement): { str: string, index: number } {
   if (dom === null) {
-    return {str: '', index: 0}
+    return { str: '', index: 0 }
   }
   let index = 0
   const parent = dom.parentElement
   if (parent) {
     const childrens = parent.children
-    for (let i= 0;i<childrens.length;i++) {
+    for (let i = 0; i < childrens.length; i++) {
       if (childrens[i] === dom) break
       if (childrens[i].nodeName === dom.nodeName) {
         index++

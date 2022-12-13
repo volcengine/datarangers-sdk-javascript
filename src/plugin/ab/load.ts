@@ -1,3 +1,5 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import { init, addAllowdOrigin, dispatchMsg, receiveMsg, IDataReceive } from '../../util/postMessage'
 import { loadScript } from '../../util/tool'
 import { VISUAL_AB_CORE, VISUAL_AB_LOADER, SDK_VERSION, VISUAL_URL_INSPECTOR } from '../../collect/constant'
@@ -6,7 +8,7 @@ let VISUAL_URL = ''
 
 let isLoaded = false;
 
-function loadEditorScript({ event, editorUrl }) {
+function loadEditorScript({ event, editorUrl, collectInstance, fromSession = true }) {
   if (isLoaded) {
     return
   }
@@ -23,11 +25,43 @@ function loadEditorScript({ event, editorUrl }) {
 }
 
 export default function readyToLoadEditor(collectInstance: any, config: any) {
-  window.RANGERSVisualEditor = window.RANGERSVisualEditor || {}
+  window.TEAVisualEditor = window.TEAVisualEditor || {}
   addAllowdOrigin(['*'])
   var _editorUrl = ''
   init(config, SDK_VERSION)
-  receiveMsg('rangers:openVisualABEditor', (event) => {
+  var domain
+  var scriptSrc = ''
+  try {
+    var resourceList = window.performance.getEntriesByType('resource')
+    if (resourceList && resourceList.length) {
+      resourceList.forEach(item => {
+        if (item['initiatorType'] === 'script') {
+          if (item.name && item.name.indexOf('collect') !== -1) {
+            scriptSrc = item.name
+          }
+        }
+      })
+      if (!scriptSrc) {
+        // if the filename is error
+        if (document.currentScript) {
+          // not support in ie
+          scriptSrc = document.currentScript['src']
+        }
+      }
+      if (scriptSrc) {
+        domain = scriptSrc.split('/')
+        if (domain && domain.length) {
+          _editorUrl = `https:/`
+          for (let i = 2; i < domain.length; i++) {
+            if (i === domain.length - 1) break;
+            _editorUrl = _editorUrl + `/${domain[i]}`
+          }
+          _editorUrl = `${_editorUrl}/visual-ab-core`
+        }
+      }
+    }
+  } catch (e) { }
+  receiveMsg('tea:openVisualABEditor', (event) => {
     let rawData: IDataReceive = event.data
     if (typeof event.data === 'string') {
       try {
@@ -55,13 +89,14 @@ export default function readyToLoadEditor(collectInstance: any, config: any) {
     } else {
       VISUAL_URL = `${VISUAL_AB_CORE}?query=${Date.now()}`
     }
-    window.RANGERSVisualEditor.lang = lang
-    window.RANGERSVisualEditor.__ab_domin = config.channel_domain || ''
-    loadEditorScript({ event, editorUrl: VISUAL_URL })
+    window.TEAVisualEditor.lang = lang
+    window.TEAVisualEditor.__ab_domin = config.channel_domain || ''
+    loadEditorScript({ event, editorUrl: VISUAL_URL, collectInstance })
   })
 }
 export const loadMuiltlink = (collectInstance: any, config: any) => {
-  window.RANGERSVisualEditor.appId = config.app_id
+  window.TEAVisualEditor = window.TEAVisualEditor || {}
+  window.TEAVisualEditor.appId = config.app_id
   receiveMsg('tea:openTesterEventInspector', (event) => {
     let rawData: IDataReceive = event.data
     if (typeof event.data === 'string') {
@@ -73,15 +108,16 @@ export const loadMuiltlink = (collectInstance: any, config: any) => {
     }
     if (!rawData) return
     const { referrer, lang, appId } = rawData;
-    window.RANGERSVisualEditor.__editor_ajax_domain = referrer || '';
-    window.RANGERSVisualEditor.__ab_appId = appId || '';
-    window.RANGERSVisualEditor.lang = lang || ''
+    window.TEAVisualEditor.__editor_ajax_domain = referrer || '';
+    window.TEAVisualEditor.__ab_appId = appId || '';
+    window.TEAVisualEditor.lang = lang || ''
     let inspectorUrl = VISUAL_URL_INSPECTOR
-    loadEditorScript({ event, editorUrl: `${inspectorUrl}.js?query=${Date.now()}` })
+    loadEditorScript({ event, editorUrl: `${inspectorUrl}.js?query=${Date.now()}`, collectInstance })
   })
 }
 export const loadVisual = (abconfig: any) => {
-  window.RANGERSVisualEditor.__ab_config = abconfig
+  window.TEAVisualEditor = window.TEAVisualEditor || {}
+  window.TEAVisualEditor.__ab_config = abconfig
   loadScript(`${VISUAL_AB_LOADER}?query=${Date.now()}`, () => {
     console.log('load visual render success')
   }, () => {

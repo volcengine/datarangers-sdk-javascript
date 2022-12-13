@@ -1,4 +1,5 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import { isSupVisChange, beforePageUnload, isObject } from '../../util/tool'
 
 interface Option {
@@ -20,8 +21,8 @@ export default class Close {
   set_title: string
   aliveDTime: number = 60 * 1000
   aliveName: string
-  options: Option = { closeName: 'predefine_page_close', params : {}}
-  activeStartTime:number
+  options: Option = { closeName: 'predefine_page_close', params: {} }
+  activeStartTime: number
   activeEndTime: any
   activeTimes: number
   totalTime: number
@@ -29,7 +30,7 @@ export default class Close {
   constructor(collect: any, config: any) {
     this.collect = collect
     this.config = config
-    this.maxDuration = config.max_duration || config.maxDuration || 24 * 60 * 60 * 1000
+    this.maxDuration = config.maxDuration || 24 * 60 * 60 * 1000
     this.pageStartTime = Date.now()
     if (isObject(config.enable_stay_duration)) {
       this.options = Object.assign(this.options, config.enable_stay_duration)
@@ -57,8 +58,8 @@ export default class Close {
   resetData() {
     this.activeStartTime = this.activeStartTime === undefined ? this.pageStartTime : Date.now()
     this.activeEndTime = undefined
-    this.activeTimes = 1 
-    this.totalTime = 0 
+    this.activeTimes = 1
+    this.totalTime = 0
   }
 
   sendEventPageClose() {
@@ -72,17 +73,16 @@ export default class Close {
       url: this.getParams('url'),
       active_times: this.activeTimes,
       duration: this.totalTime,
-      total_duration: total_duration, 
+      total_duration: total_duration,
       is_support_visibility_change: isSupVisChange(),
       ...this.options.params
     })
-
     this.pageStartTime = Date.now()
     this.resetData()
   }
 
   getParams(type: string) {
-    switch(type) {
+    switch (type) {
       case 'url_path':
         return this.set_path || this.url_path || location.pathname
       case 'title':
@@ -116,9 +116,8 @@ export default class Close {
           duration: this.totalTime,
           page_title: document.title || location.pathname
         }))
-      } catch (e) {}
+      } catch (e) { }
     }
-
     this.sendEventPageClose()
   };
 

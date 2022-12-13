@@ -1,8 +1,11 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import Types from './hooktype';
 import Storage from '../util/storage'
 import request from '../util/request'
-import { beforePageUnload } from '../util/tool'
+import { beforePageUnload, encodeBase64 } from '../util/tool'
+import { DebuggerMesssge } from './hooktype';
+import EventCheck from '../plugin/check/check'
 
 type TEvent = any;
 export default class Event {
@@ -22,19 +25,21 @@ export default class Event {
   reportUrl: string
   eventCache: TEvent[] = []
   beconEventCache: TEvent[] = []
+  eventCheck: any
   apply(collect: any, config: any) {
     this.collect = collect
     this.config = config
     this.configManager = collect.configManager
     this.cacheStorgae = new Storage(true)
     this.localStorage = new Storage(false)
-    this.maxReport = config.max_report || 10
-    this.reportTime = config.report_time || config.reportTime || 30
+    this.eventCheck = new EventCheck(collect, config)
+    this.maxReport = config.max_report || 20
+    this.reportTime = config.reportTime || 30
     this.timeout = config.timeout || 100000
     this.reportUrl = this.configManager.getUrl('event')
-    this.eventKey = `__rangers_cache_events_${this.configManager.get('app_id')}`
-    this.beconKey = `__rangers_cache_events_becon_${this.configManager.get('app_id')}`
-    this.abKey =`__rangers_sdk_ab_version_${this.configManager.get('app_id')}`
+    this.eventKey = `__tea_cache_events_${this.configManager.get('app_id')}`
+    this.beconKey = `__tea_cache_events_becon_${this.configManager.get('app_id')}`
+    this.abKey = `__tea_sdk_ab_version_${this.configManager.get('app_id')}`
     this.collect.on(Types.Ready, () => {
       this.reportAll(false)
     })
@@ -59,7 +64,7 @@ export default class Event {
     window.addEventListener('unload', () => {
       this.reportAll(true)
     }, false)
-    beforePageUnload(() =>{
+    beforePageUnload(() => {
       this.reportAll(true)
     })
     document.addEventListener('visibilitychange', () => {
@@ -84,12 +89,14 @@ export default class Event {
         this.report(false)
       } else {
         const _time = this.reportTime
-        this.reportTimeout = setTimeout(()=>{
+        this.reportTimeout = setTimeout(() => {
           this.report(false)
           this.reportTimeout = null
         }, _time)
       }
-    } catch (e) {}
+    } catch (e) {
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
+    }
   }
   beconEvent(events: any) {
     const cache = this.cacheStorgae.getItem(this.beconKey) || []
@@ -118,7 +125,7 @@ export default class Event {
   }
   sliceEvent(events: any, becon: boolean) {
     if (events.length > this.eventLimit) {
-      for(let i = 0; i < events.length; i += this.eventLimit) {
+      for (let i = 0; i < events.length; i += this.eventLimit) {
         let result = []
         result = events.slice(i, i + this.eventLimit);
         const mergeData = this.split(this.merge(result));
@@ -129,28 +136,42 @@ export default class Event {
       this.send(mergeData, becon);
     }
   }
-  merge(events: any) {
+  merge(events: any, ignoreEvtParams?: boolean) {
     const { header, user } = this.configManager.get()
     header.custom = JSON.stringify(header.custom)
     const evtParams = this.configManager.get('evtParams')
+    const type = this.configManager.get('user_unique_id_type')
     const mergeEvents = events.map(item => {
       try {
-        if (Object.keys(evtParams).length) {
+        if (Object.keys(evtParams).length && !ignoreEvtParams) {
           item.params = { ...evtParams, ...item.params }
         }
-        const abCache = this.localStorage.getItem(this.abKey)
-        if (abCache && abCache.uuid && abCache.uuid === user.user_unique_id) {
-          if (this.configManager.getAbVersion()) {
-            item.ab_sdk_version = this.configManager.getAbVersion()
+        if (type) {
+          item.params['$user_unique_id_type'] = type
+        }
+        const abCache = this.configManager.getAbCache();
+        const abVersion = this.configManager.getAbVersion()
+        if (abVersion && abCache) {
+          if (this.config.disable_ab_reset) {
+            // 不校验ab的uuid
+            item.ab_sdk_version = abVersion
+          } else if (abCache.uuid === user.user_unique_id) {
+            item.ab_sdk_version = abVersion
           }
         }
         item.session_id = this.collect.sessionManager.getSessionId()
         item.params = JSON.stringify(item.params)
         return item;
       } catch (e) {
+        this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
         return item;
       }
     })
+    let mergeData = []
+    if (!Object.keys(user).length) {
+      console.warn('user info error，cant report')
+      return mergeData
+    }
     const resultEvent = JSON.parse(
       JSON.stringify({
         events: mergeEvents,
@@ -159,13 +180,13 @@ export default class Event {
       }),
     );
     resultEvent.local_time = Math.floor(Date.now() / 1000);
-    resultEvent.user_unique_type = this.config.enable_ttwebid ? this.config.user_unique_type : undefined
-    let mergeData = []
+    resultEvent.verbose = 1;
+    resultEvent.user_unique_type = this.config.enable_ttwebid ? this.config.user_unique_type : undefined;
     mergeData.push(resultEvent)
     return mergeData
   }
   split(eventData: any) {
-    eventData = eventData.map(item =>{
+    eventData = eventData.map(item => {
       const _item = []
       _item.push(item)
       return _item
@@ -173,7 +194,7 @@ export default class Event {
     return eventData
   }
   send(events: any, becon: boolean) {
-    if (!events.length) return
+    if (!events.length) return;
     events.forEach(originItem => {
       try {
         let filterItem = JSON.parse(JSON.stringify(originItem))
@@ -189,26 +210,38 @@ export default class Event {
             console.warn('filterEvent api must return data !!')
           }
         }
-        const reportItem = filterItem || originItem
+        const reportItem = filterItem || originItem;
+        const checkItem = JSON.parse(JSON.stringify(reportItem));
+        this.eventCheck.checkVerify(checkItem);
+        if (!reportItem.length) return;
         this.collect.emit(Types.SubmitBefore, reportItem);
         this.collect.emit(Types.SubmitVerify, reportItem);
+        // const encodeItem = this.config.disable_encryption ? reportItem : `data=${encodeBase64(JSON.stringify(reportItem))}`;
         request(this.reportUrl, reportItem, this.timeout, false,
           (res, data) => {
             if (res && res.e !== 0) {
-              this.collect.emit(Types.SubmitError, { type:'f_data', eventData: data, errorCode: res.e, response: res });
+              this.collect.emit(Types.SubmitError, { type: 'f_data', eventData: data, errorCode: res.e, response: res });
+              this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报失败', time: Date.now(), data: checkItem, code: res.e, failType: '数据异常', status: 'fail' })
             } else {
               this.collect.emit(Types.SubmitScuess, { eventData: data, res });
+              this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报成功', time: Date.now(), data: checkItem, code: 200, status: 'success' })
             }
           },
           (eventData, errorCode) => {
             this.configManager.get('reportErrorCallback')(eventData, errorCode)
-            this.collect.emit(Types.SubmitError, { type:'f_net', eventData, errorCode })
-          },becon
-        ) 
+            this.collect.emit(Types.SubmitError, { type: 'f_net', eventData, errorCode })
+            this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报网络异常', time: Date.now(), data: checkItem, code: errorCode, failType: '网络异常', status: 'fail' })
+
+          }, becon, false
+        )
+        this.eventCheck.checkVerify(reportItem);
+        this.collect.emit(Types.SubmitVerify, reportItem);
+        this.collect.emit(Types.SubmitVerifyH, reportItem);
         this.collect.emit(Types.SubmitAfter, reportItem);
       } catch (e) {
         console.warn(`something error, ${JSON.stringify(e.stack)}`)
-      }      
+        this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
+      }
     })
   }
 }

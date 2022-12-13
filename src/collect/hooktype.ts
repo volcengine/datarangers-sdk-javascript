@@ -29,6 +29,7 @@ enum Types {
   SubmitAfter = 'submit-after',
   SubmitError = 'submit-error',
   SubmitVerify = 'submit-verify',
+  SubmitVerifyH = 'submit-verify-h5',
 
   Stay = 'stay',
   ResetStay = 'reset-stay',
@@ -49,6 +50,7 @@ enum Types {
   AbCloseLayer = 'ab-close-layer',
   AbReady = 'ab-ready',
   AbComplete = 'ab-complete',
+  AbTimeout = 'ab-timeout',
 
   Profile = 'profile',
   ProfileSet = 'profile-set',
@@ -58,9 +60,23 @@ enum Types {
   ProfileAppend = 'profile-append',
   ProfileClear = 'profile-clear',
 
-  Autotrack = 'autotrack',
-  AutotrackReady = 'autotrack-ready',
+  TrackDuration = 'track-duration',
+  TrackDurationStart = 'track-duration-start',
+  TrackDurationEnd = 'track-duration-end',
+  TrackDurationPause = 'track-duration-pause',
+  TrackDurationResume = 'tracl-duration-resume',
 
+  Autotrack = 'autotrack',
+  AutotrackReady = 'autotrack-ready'
+}
+
+export enum DebuggerMesssge {
+  DEBUGGER_MESSAGE = 'debugger-message',
+  DEBUGGER_MESSAGE_SDK = 'debugger-message-sdk',
+  DEBUGGER_MESSAGE_FETCH = 'debugger-message-fetch',
+  DEBUGGER_MESSAGE_FETCH_RESULT = 'debugger-message-fetch-result',
+  DEBUGGER_MESSAGE_EVENT = 'debugger-message-event',
+  DEVTOOL_WEB_READY = 'devtool-web-ready',
 }
 
 export default Types;

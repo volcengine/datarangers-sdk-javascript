@@ -1,6 +1,6 @@
 {
   "name": "@datarangers/sdk-javascript",
-  "version": "5.0.1",
+  "version": "0.0.1",
   "scripts": {
     "nclean": "rimraf es lib core",
     "build": "export NODE_ENV=production && npm run nclean && npx rollup -c rollup.config.js",
@@ -9,6 +9,15 @@
   "license": "ISC",
   "dependencies": {
     "js-cookie": "^3.0.1"
+  },
+  "files": [
+    "es",
+    "lib",
+    "types",
+    "core"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
   },
   "devDependencies": {
     "@babel/cli": "^7.17.10",

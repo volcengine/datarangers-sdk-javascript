@@ -1,4 +1,5 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import { isNeedElement, isAttrFilter } from './dom'
 
 
@@ -54,7 +55,7 @@ export function isTrack(node: Element, options: any): boolean {
       return true
     }
   }
-  
+
   if (!elementLevel(element)) {
     return false
   }

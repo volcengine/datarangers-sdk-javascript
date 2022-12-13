@@ -5,7 +5,7 @@ export default class HeartBeat {
   sessionInterval: number
   isSessionhasEvent: boolean
   startTime: number
-  lastTime: number 
+  lastTime: number
   collect: any
   clearIntervalFunc: () => void
   apply(collect: any, config: any) {
@@ -23,7 +23,7 @@ export default class HeartBeat {
 
   endCurrentSession() {
     this.collect.event('_be_active', {
-      start_time: this.startTime, 
+      start_time: this.startTime,
       end_time: this.lastTime,
       url: window.location.href,
       referrer: window.document.referrer,
@@ -40,7 +40,7 @@ export default class HeartBeat {
       }
     }, this.sessionInterval)
   }
-  
+
   clearInterval = () => {
     this.clearIntervalFunc && this.clearIntervalFunc()
   }
@@ -58,4 +58,4 @@ export default class HeartBeat {
       this.setInterval()
     }
   }
- }
+}

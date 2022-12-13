@@ -1,7 +1,10 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 // @ts-nocheck
 class AppBridge {
-  constructor(native) {
-    this.native = native
+  constructor(config, cfg) {
+    this.native = config.enable_native || config['evitaN'.split('').reverse().join('')]
+    this.os = cfg.get('os_name')
   }
   bridgeInject(){
     try {
@@ -53,7 +56,7 @@ class AppBridge {
         if (key === 'user_unique_id'){
           this.setUserUniqueId(info[key])
         } else {
-          if (config[key]) {
+          if (info[key]) {
             this.addHeaderInfo(key, info[key])
           } else {
             this.removeHeaderInfo(key)
@@ -135,6 +138,62 @@ class AppBridge {
       AppLogBridge.profileAppend(profile)
     } catch (error) {
       console.error(`profileAppend error`)
+    }
+  }
+  // AB
+  setExternalAbVersion(vid) {
+    try {
+      AppLogBridge.setExternalAbVersion(vid)
+    } catch (error) {
+      console.error(`setExternalAbVersion error`)
+    }
+  }
+  getVar(key, defaultValue, callback) {
+    try {
+      if (this.os === 'android') {
+        callback(AppLogBridge.getABTestConfigValueForKey(key, defaultValue))
+        alert(`getVar: ${AppLogBridge.getABTestConfigValueForKey(key, defaultValue)}`)
+      } else {
+        AppLogBridge.getABTestConfigValueForKey(key, defaultValue, (res) => {
+          alert(`getVar: ${JSON.stringify(res)}`)
+          callback(res)
+        })
+      }
+    } catch (error) {
+      console.error(`getVar error`)
+      callback(defaultValue)
+    }
+  }
+  getAllVars(callback) {
+    try {
+      if (this.os === 'android') {
+        callback(AppLogBridge.getAllAbTestConfigs())
+        alert(`getAll: ${AppLogBridge.getAllAbTestConfigs()}`)
+      } else {
+        AppLogBridge.getAllAbTestConfigs((res) => {
+          callback(res)
+          alert(`getAll: ${res}`)
+        })
+      }
+    } catch (error) {
+      console.error(`getAllVars error`)
+      callback(null)
+    }
+  }
+  getAbSdkVersion(callback) {
+    try {
+      if (this.os === 'android') {
+        callback(AppLogBridge.getAbSdkVersion())
+        alert(AppLogBridge.getAbSdkVersion())
+      } else {
+        AppLogBridge.getAbSdkVersion(res => {
+          callback(res)
+          alert(res)
+        })
+      }
+    } catch (error) {
+      console.error(`getAbSdkVersion error`)
+      callback('')
     }
   }
 }

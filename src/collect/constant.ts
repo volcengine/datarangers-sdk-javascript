@@ -1,3 +1,4 @@
+
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 
 interface I_LOG_URL {
@@ -13,9 +14,23 @@ LOG = {
   sg: '1fz22z22z1nz21z4mz4bz4bz1kz1az21z4az22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
 }
 
+// CN: https://mcs.volceapplog.com VA: https://mcs.itobsnssdk.com SG: https://mcs.tobsnssdk.com
+
 export const LOG_URL = LOG
 
-export const SDK_VERSION = '5.0.0'
+export const SDK_VERSION = '0.0.1'
+
+let SDK_USE_TYPE = 'npm'
+
+
+export const SDK_TYPE = SDK_USE_TYPE
+
+export const AB_DOMAINS = {
+  cn: '1fz22z22z1nz21z4mz4bz4bz22z1mz19z1jz1mz1ez4az1az22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
+  va: '1fz22z22z1nz21z4mz4bz4bz22z1mz19z1jz1mz1ez4az1gz22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
+  sg: '1fz22z22z1nz21z4mz4bz4bz22z1mz19z1jz1mz1ez4az22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
+}
+
 
 export const VISUAL_EDITOR_RANGERS = 'https://lf3-data.volccdn.com/obj/data-static/log-sdk/collect/visual-editor-rangers.js'
 export const VISUAL_AB_CORE = 'https://lf3-data.volccdn.com/obj/data-static/log-sdk/collect/visual-ab-core.js'

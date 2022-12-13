@@ -1,12 +1,12 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 
-import { IInitParam, IConfigParam} from '../../types/types'
+import { IInitParam, IConfigParam } from '../../types/types'
 import Hook from '../util/hook';
 import { THook, THookInfo } from '../util/hook';
 import { isObject, isNumber, isString, getIndex, hashCode } from '../util/tool';
 import ConfigManager from './config'
 import Logger from '../util/log'
-import Types from './hooktype';
+import Types, { DebuggerMesssge } from './hooktype';
 import AppBridge from '../util/jsbridge'
 import Event from './event'
 import Token from './token'
@@ -14,6 +14,7 @@ import Session from './session';
 import { SDK_VERSION } from './constant'
 import Storage from '../util/storage'
 import fetch from '../util/fetch'
+import Debugger from '../plugin/debug/debug';
 
 
 type TEvent = any;
@@ -22,8 +23,8 @@ export type ProfileParams = {
   [key: string]: string | number | boolean | Array<any>;
 };
 export interface IPlugin {
-  new ();
-  apply:(collect: Collector, options: IInitParam) => void
+  new();
+  apply: (collect: Collector, options: IInitParam) => void
 }
 type Plugin = {
   name?: string;
@@ -55,13 +56,14 @@ export default class Collector {
   destroyInstance: boolean = false
   adapters: Record<string, any> = {}
   sdkReady: boolean = false
+  debugger: any
   constructor(name: string) {
     this.name = name
     this.hook = new Hook()
     this.logger = new Logger(name)
     this.remotePlugin = new Map()
     this.Types = Types
-    this.adapters['fetch'] = fetch 
+    this.adapters['fetch'] = fetch
     this.adapters['storage'] = Storage
   }
   static usePlugin(plugin: IPlugin, name?: string, options?: any) {
@@ -83,7 +85,7 @@ export default class Collector {
       Collector.plugins.push({ plugin })
     }
   }
-  init(initConfig: IInitParam){
+  init(initConfig: IInitParam) {
     if (this.inited) {
       console.log('init can be call only one time')
       return
@@ -100,18 +102,24 @@ export default class Collector {
       console.warn('app_key param is error, must be string, please check!')
       return;
     }
-    if (!initConfig.channel_domain && ['cn','sg','va'].indexOf(initConfig.channel) === -1) {
+    if (!initConfig.channel_domain && ['cn', 'sg', 'va'].indexOf(initConfig.channel) === -1) {
       console.warn('channel must be `cn`, `sg`,`va` !!!')
       initConfig.channel = 'cn'
     }
     this.inited = true
-    this.appBridge = new AppBridge(initConfig.enable_native)
+    this.logger = new Logger(this.name, initConfig.log)
+    this.configManager = new ConfigManager(this, initConfig)
+    this.appBridge = new AppBridge(initConfig, this.configManager)
     this.bridgeReport = this.appBridge.bridgeInject()
-    this.configManager = new ConfigManager(initConfig)
+    this.debugger = new Debugger(this, initConfig)
     this.initConfig = initConfig
+    this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 执行INIT', data: initConfig, level: 'info', time: Date.now() })
+    if (initConfig.disable_auto_pv) {
+      this.disableAutoPageView = true;
+    }
     if (!this.bridgeReport) {
-      this.configManager.set({app_id: initConfig.app_id})
-      this.eventManager = new Event() 
+      this.configManager.set({ app_id: initConfig.app_id })
+      this.eventManager = new Event()
       this.tokenManager = new Token()
       this.sessionManager = new Session()
       Promise.all([
@@ -137,26 +145,29 @@ export default class Collector {
           }, this.pluginInstances)
         } catch (e) {
           console.log(`load plugin error, ${e.message}`)
+          this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
         }
         this.sdkReady = true;
-        this.emit(Types.Ready);  
-        console.info(`[${this.name}] appid: ${initConfig.app_id}, userInfo:${JSON.stringify(this.configManager.get('user'))}`);
-        console.info(`[${this.name}] appid: ${initConfig.app_id}, sdk is ready, version is ${SDK_VERSION}, you can report now !!!`);
+        this.emit(Types.Ready);
+        this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 初始化完成', time: Date.now(), level: 'info', data: this.configManager.get('user') })
+        this.logger.info(`appid: ${initConfig.app_id}, userInfo:${JSON.stringify(this.configManager.get('user'))}`);
+        this.logger.info(`appid: ${initConfig.app_id}, sdk is ready, version is ${SDK_VERSION}, you can report now !!!`);
         try {
-          (window.opener || window.parent).postMessage('rangers-sdk]ready', '*');
-        } catch (e) {}
-        if (initConfig.disable_auto_pv) {
-          this.disableAutoPageView = true;
+          (window.opener || window.parent).postMessage('[tea-sdk]ready', '*');
+        } catch (e) {
+          this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
         }
         this.pageView();
         this.on(Types.TokenChange, (tokenType: string) => {
           if (tokenType === 'webid') {
             this.pageView();
           }
-          console.info(`[${this.name}] appid: ${initConfig.app_id} token change, new userInfo:${JSON.stringify(this.configManager.get('user'))}`)
+          this.logger.info(`appid: ${initConfig.app_id} token change, new userInfo:${JSON.stringify(this.configManager.get('user'))}`)
+          this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 设置了用户信息', time: Date.now(), secType: 'USER', level: 'info', data: this.configManager.get('user') })
         })
         this.on(Types.TokenReset, () => {
-          console.info(`[${this.name}] appid: ${initConfig.app_id} token reset, new userInfo:${JSON.stringify(this.configManager.get('user'))}`)
+          this.logger.info(`appid: ${initConfig.app_id} token reset, new userInfo:${JSON.stringify(this.configManager.get('user'))}`)
+          this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 重置了用户信息', time: Date.now(), secType: 'USER', level: 'info', data: this.configManager.get('user') })
         })
         this.on(Types.RouteChange, (info) => {
           if (info.init) return;
@@ -196,7 +207,7 @@ export default class Collector {
           newConfig = Object.assign(cacheConfig, configs)
         }
         this.configManager.setStore(configs)
-      }   
+      }
       const {
         web_id: webId,
         user_unique_id: userUniqueId,
@@ -209,6 +220,7 @@ export default class Collector {
         this.emit(Types.ConfigUuid, newConfig['user_unique_id'])
       }
       this.configManager.set(otherConfigs)
+      this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 执行CONFIG', level: 'info', time: Date.now(), data: newConfig })
     }
   }
   setDomain(domain: string) {
@@ -225,6 +237,11 @@ export default class Collector {
     if (!this.inited || this.sended) return
     this.sended = true
     this.emit(Types.Start)
+    this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 执行START', level: 'info', time: Date.now() })
+    if (this.bridgeReport) {
+      this.pageView()
+      this.emit(Types.Ready)
+    }
   }
   event(event: string | TEvent[], params?: any) {
     try {
@@ -249,7 +266,8 @@ export default class Collector {
         }
       }
     } catch (e) {
-      console.warn('something error, please check')
+      this.logger.warn('something error, please check')
+      this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
     }
   }
   beconEvent(event: string, params?: any) {
@@ -296,6 +314,7 @@ export default class Collector {
       }
       return evtData
     } catch (e) {
+      this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
       return { event: _event, params }
     }
   }
@@ -316,7 +335,7 @@ export default class Collector {
     this.hook.off(type, hook);
   }
 
-  emit(type: string, info?: THookInfo, wait?:string) {
+  emit(type: string, info?: THookInfo, wait?: string) {
     this.hook.emit(type, info, wait);
   }
   set(type: string) {
@@ -327,7 +346,7 @@ export default class Collector {
     this.predefinePageView();
   }
   predefinePageView(params: any = {}) {
-    var defaultPvParams = {
+    const defaultPvParams = {
       title: document.title || location.pathname,
       url: location.href,
       url_path: location.pathname,
@@ -335,7 +354,7 @@ export default class Collector {
       referrer: window.document.referrer,
       $is_first_time: `${this.configManager.is_first_time}`
     }
-    var mergedParams = {
+    const mergedParams = {
       ...defaultPvParams,
       ...params,
     }
@@ -374,11 +393,11 @@ export default class Collector {
   }
 
   /** stay相关api */
-  resetStayDuration(url_path: string = '' , title: string = '', url: string = '') {
-    this.emit(Types.ResetStay, {url_path, title, url}, Types.Stay)
+  resetStayDuration(url_path: string = '', title: string = '', url: string = '') {
+    this.emit(Types.ResetStay, { url_path, title, url }, Types.Stay)
   }
-  resetStayParams(url_path: string = '' , title: string = '', url: string = '') {
-    this.emit(Types.SetStay, {url_path, title, url}, Types.Stay)
+  resetStayParams(url_path: string = '', title: string = '', url: string = '') {
+    this.emit(Types.SetStay, { url_path, title, url }, Types.Stay)
   }
   getToken(callback: any, timeout?: number) {
     let tokenReturn = false
@@ -410,66 +429,111 @@ export default class Collector {
       getId()
     })
   }
+  /**
+   * track相关api
+  */
+  startTrackEvent(eventName: string) {
+    if (!eventName) return;
+    this.emit(Types.TrackDurationStart, eventName, Types.TrackDuration)
+  }
+  endTrackEvent(eventName: string, params: any = {}) {
+    if (!eventName) return;
+    this.emit(Types.TrackDurationEnd, {
+      eventName,
+      params
+    }, Types.TrackDuration)
+  }
+  pauseTrackEvent(eventName: string) {
+    if (!eventName) return;
+    this.emit(Types.TrackDurationPause, eventName, Types.TrackDuration)
+  }
+  resumeTrackEvent(eventName: string) {
+    if (!eventName) return;
+    this.emit(Types.TrackDurationResume, eventName, Types.TrackDuration)
+  }
 
   /** profile相关api */
-  profileSet(profile: ProfileParams){
+  profileSet(profile: ProfileParams) {
     if (this.bridgeReport) {
       this.appBridge.profileSet(JSON.stringify(profile))
     } else {
       this.emit(Types.ProfileSet, profile, Types.Profile)
     }
+    this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 执行profileSet', level: 'info', time: Date.now(), data: profile })
   }
-  
-  profileSetOnce(profile: ProfileParams){
+
+  profileSetOnce(profile: ProfileParams) {
     if (this.bridgeReport) {
       this.appBridge.profileSetOnce(JSON.stringify(profile))
     } else {
       this.emit(Types.ProfileSetOnce, profile, Types.Profile)
     }
+    this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 执行profileSetOnce', level: 'info', time: Date.now(), data: profile })
   }
-  
-  profileIncrement(profile: ProfileParams){
+
+  profileIncrement(profile: ProfileParams) {
     if (this.bridgeReport) {
       this.appBridge.profileIncrement(JSON.stringify(profile))
     } else {
       this.emit(Types.ProfileIncrement, profile, Types.Profile)
     }
+    this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 执行profileIncrement', level: 'info', time: Date.now(), data: profile })
   }
-  
-  profileUnset(key: string){
+
+  profileUnset(key: string) {
     if (this.bridgeReport) {
       this.appBridge.profileUnset(key)
     } else {
       this.emit(Types.ProfileUnset, key, Types.Profile)
     }
+    this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 执行profileUnset', level: 'info', time: Date.now(), data: key })
   }
-  
-  profileAppend(profile: ProfileParams){
+
+  profileAppend(profile: ProfileParams) {
     if (this.bridgeReport) {
       this.appBridge.profileAppend(JSON.stringify(profile))
     } else {
       this.emit(Types.ProfileAppend, profile, Types.Profile)
     }
+    this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 执行profileAppend', level: 'info', time: Date.now(), data: profile })
   }
 
   /** ab相关api */
   setExternalAbVersion(vids: string) {
-    this.emit(
-      Types.AbExternalVersion,
-      typeof vids === 'string' && vids ? `${vids}`.trim() : null,
-      Types.Ab
-    )
+    if (this.bridgeReport) {
+      this.appBridge.setExternalAbVersion(vids)
+    } else {
+      this.emit(
+        Types.AbExternalVersion,
+        typeof vids === 'string' && vids ? `${vids}`.trim() : null,
+        Types.Ab
+      )
+    }
   }
 
   getVar(name, defaultValue, callback) {
-    this.emit(Types.AbVar, {name, defaultValue, callback}, Types.Ab)
+    if (this.bridgeReport) {
+      this.appBridge.getVar(name, defaultValue, callback)
+    } else {
+      this.emit(Types.AbVar, { name, defaultValue, callback }, Types.Ab)
+    }
   }
-
-  getABconfig(param: any, callback: any) {
-    this.emit(Types.AbConfig, {param, callback}, Types.Ab)
+  getAllVars(callback) {
+    if (this.bridgeReport) {
+      this.appBridge.getAllVars(callback)
+    } else {
+      this.emit(Types.AbAllVars, callback, Types.Ab)
+    }
   }
-  getAbSdkVersion() {
-    return this.configManager.getAbVersion() || ''
+  getABconfig(params: any, callback: any) {
+    this.emit(Types.AbConfig, { params, callback }, Types.Ab)
+  }
+  getAbSdkVersion(callback?: any) {
+    if (this.bridgeReport && callback) {
+      this.appBridge.getAbSdkVersion(callback)
+    } else {
+      return this.configManager.getAbVersion() || ''
+    }
   }
   onAbSdkVersionChange(linster: any) {
     this.emit(Types.AbVersionChangeOn, linster, Types.Ab)
@@ -487,11 +551,6 @@ export default class Collector {
   closeOverlayer() {
     this.emit(Types.AbCloseLayer, '', Types.Ab)
   }
-
-  getAllVars(callback) {
-    this.emit(Types.AbAllVars, callback, Types.Ab)
-  }
-
   destoryInstace() {
     if (this.destroyInstance) return
     this.destroyInstance = true

@@ -7,22 +7,22 @@ export default class Logger {
     this.isLog = isLog || false
     this.name = name || ''
   }
-  info (message: string) {
+  info(message: string) {
     if (this.isLog) {
-      console.log(`[${this.name}]` + ' ' + message)
+      console.log('%c %s', 'color: yellow; background-color: black;', `[instance: ${this.name}]` + ' ' + message)
     }
   }
-  warn(message: string){
+  warn(message: string) {
     if (this.isLog) {
-      console.warn(`[${this.name}]` + ' ' + message)
+      console.warn('%c %s', 'color: yellow; background-color: black;', `[instance: ${this.name}]` + ' ' + message)
     }
   }
-  error(message: string){
+  error(message: string) {
     if (this.isLog) {
-      console.error(`[${this.name}]` + ' ' + message)
+      console.error(`[instance: ${this.name}]` + ' ' + message)
     }
   }
-  throw(msg: string){
+  throw(msg: string) {
     this.error(this.name)
     throw new Error(msg)
   }

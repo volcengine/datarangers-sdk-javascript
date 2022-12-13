@@ -1,4 +1,5 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import { EventConfig, ScoutConfig } from './type'
 
 
@@ -27,8 +28,9 @@ export const defaultConfig = {
 export default class Config {
   config: _Config
 
-  constructor(config) {
+  constructor(config, options) {
     this.config = config
+    this.config.eventConfig = Object.assign(this.config.eventConfig, options)
   }
   getConfig() {
     return this.config

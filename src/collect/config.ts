@@ -1,8 +1,11 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import Client from '../util/client'
 import Storage from '../util/storage'
 import { decodeUrl } from '../util/tool'
 import { SDK_VERSION, LOG_URL } from './constant'
+import EventCheck from '../plugin/check/check'
+import { DebuggerMesssge } from './hooktype';
 
 
 const undef = undefined
@@ -17,6 +20,7 @@ const REPORT_URL = '/list'
 const EXPIRE_TIME = 60 * 60 * 1000 * 24 * 90
 
 export default class ConfigManager {
+  collect: any
   envInfo: any
   evtParams: any
   filter: any
@@ -28,22 +32,27 @@ export default class ConfigManager {
   configKey: string
   domain: string
   ab_version: any
+  ab_cache: any
   is_first_time: boolean = true
   isLast: boolean
   configPersist: boolean = false
-  constructor(initConfig: any) {
+  eventCheck: any
+  constructor(collect: any, initConfig: any) {
     this.initConfig = initConfig
+    this.collect = collect
     const client = new Client(initConfig.app_id, initConfig.cookie_domain || '', initConfig.cookie_expire || EXPIRE_TIME)
     const commonInfo = client.init()
-    const firstKey = `__rangers_cache_first_${initConfig.app_id}`
-    this.configKey = `__rangers_cache_config_${initConfig.app_id}`
+    this.eventCheck = new EventCheck(collect, initConfig)
+    const firstKey = `__tea_cache_first_${initConfig.app_id}`
+    this.configKey = `__tea_cache_config_${initConfig.app_id}`
     this.sessionStorage = new Storage(false, 'session')
     this.localStorage = new Storage(false, 'local')
-    if (initConfig.config_persist) {
+    if (initConfig.configPersist) {
       this.configPersist = true
-      this.storage = initConfig.config_persist === 1 ? this.sessionStorage : this.localStorage
+      this.storage = initConfig.configPersist === 1 ? this.sessionStorage : this.localStorage
     }
-    if (this.localStorage.getItem(firstKey)) {
+    const firstStatus = this.localStorage.getItem(firstKey)
+    if (firstStatus && firstStatus == 1) {
       this.is_first_time = false
     } else {
       this.is_first_time = true
@@ -53,12 +62,13 @@ export default class ConfigManager {
       user: {
         user_unique_id: undef,
         user_type: undef,
-        user_id: undef, 
+        user_id: undef,
         user_is_auth: undef,
         user_is_login: undef,
         device_id: undef,
         web_id: undef,
         ip_addr_id: undef,
+        user_unique_id_type: undef,
       },
       header: {
         app_id: undef,
@@ -74,7 +84,7 @@ export default class ConfigManager {
         device_model: commonInfo.device_model,
         ab_client: undef,
         traffic_type: undef,
-        
+
         client_ip: undef,
         device_brand: undef,
         os_api: undef,
@@ -115,19 +125,20 @@ export default class ConfigManager {
         utm_medium: commonInfo.utm.utm_medium,
         utm_campaign: commonInfo.utm.utm_campaign,
         tracer_data: JSON.stringify(commonInfo.utm.tracer_data),
-        custom:{},
+        custom: {},
 
         wechat_unionid: undef,
         wechat_openid: undef,
       },
     }
-    this.ab_version = '',
-    this.evtParams = {},
+    this.ab_version = '';
+    this.evtParams = {};
     // 事件处理函数
-    this.reportErrorCallback = () => {}
-    this.isLast = false
-    this.setCustom(commonInfo)
-    this.initDomain()
+    this.reportErrorCallback = () => { }
+    this.isLast = false;
+    this.setCustom(commonInfo);
+    this.initDomain();
+    this.initABData();
   }
   initDomain() {
     const channelDomain = this.initConfig['channel_domain'];
@@ -143,6 +154,23 @@ export default class ConfigManager {
   }
   getDomain() {
     return this.domain;
+  }
+  initABData() {
+    const abKey = `__tea_sdk_ab_version_${this.initConfig.app_id}`;
+    let abCache = null;
+    if (this.initConfig.ab_cross) {
+      const ab_cookie = this.localStorage.getCookie(abKey, this.initConfig.ab_cookie_domain);
+      abCache = ab_cookie ? JSON.parse(ab_cookie) : null;
+    } else {
+      abCache = this.localStorage.getItem(abKey);
+    }
+    this.setAbCache(abCache);
+  }
+  setAbCache(data: any) {
+    this.ab_cache = data;
+  }
+  getAbCache() {
+    return this.ab_cache;
   }
   setAbVersion(vid: string) {
     this.ab_version = vid
@@ -163,12 +191,19 @@ export default class ConfigManager {
         report = TOB_URL
         break;
     }
-    return `${this.getDomain()}${report}`
+    let query = ''
+    if (this.initConfig.caller) {
+      query = `?sdk_version=${SDK_VERSION}&sdk_name=web&app_id=${this.initConfig.app_id}&caller=${this.initConfig.caller}`
+    }
+    // if (!this.initConfig.disable_encryption && type === 'event') {
+    //   query = this.initConfig.caller ? `${query}&encryption=1` : `${query}?encryption=1`
+    // }
+    return `${this.getDomain()}${report}${query}`
   }
   setCustom(commonInfo) {
     if (commonInfo && commonInfo.latest_data && commonInfo.latest_data.isLast) {
       delete commonInfo.latest_data['isLast']
-      this.isLast =true
+      this.isLast = true
       for (let key in commonInfo.latest_data) {
         this.envInfo.header.custom[key] = commonInfo.latest_data[key]
       }
@@ -179,6 +214,9 @@ export default class ConfigManager {
       if (info[key] === undefined || info[key] === null) {
         this.delete(key)
       }
+      try {
+        this.eventCheck.calculate(key, 'config')
+      } catch (e) { }
       if (key === 'traffic_type' && this.isLast) {
         this.envInfo.header.custom['$latest_traffic_source_type'] = info[key]
       }
@@ -211,7 +249,7 @@ export default class ConfigManager {
         } else if (Object.hasOwnProperty.call(this.envInfo.user, key)) {
           if (['user_type', 'ip_addr_id'].indexOf(key) > -1) {
             this.envInfo.user[key] = info[key] ? Number(info[key]) : info[key]
-          } else if (['user_id', 'web_id', 'user_unique_id'].indexOf(key) > -1) {
+          } else if (['user_id', 'web_id', 'user_unique_id', 'user_unique_id_type'].indexOf(key) > -1) {
             this.envInfo.user[key] = info[key] ? String(info[key]) : info[key]
           } else if (['user_is_auth', 'user_is_login'].indexOf(key) > -1) {
             this.envInfo.user[key] = Boolean(info[key])
@@ -227,14 +265,14 @@ export default class ConfigManager {
     })
   }
 
-  get(key) { 
+  get(key) {
     try {
       if (key) {
         if (key === 'evtParams') {
           return this.evtParams
-        } else if (key === 'reportErrorCallback'){
+        } else if (key === 'reportErrorCallback') {
           return this[key]
-        } else if (Object.hasOwnProperty.call(this.envInfo.user, key)){
+        } else if (Object.hasOwnProperty.call(this.envInfo.user, key)) {
           return this.envInfo.user[key]
         } else if (Object.hasOwnProperty.call(this.envInfo.header, key)) {
           return this.envInfo.header[key]
@@ -243,9 +281,10 @@ export default class ConfigManager {
         }
       } else {
         return JSON.parse(JSON.stringify(this.envInfo))
-      } 
+      }
     } catch (e) {
       console.log('get config stringify error ')
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
     }
   }
   setStore(config: any) {
@@ -256,8 +295,9 @@ export default class ConfigManager {
         const newCache = Object.assign(config, _cache)
         this.storage.setItem(this.configKey, newCache)
       }
-    } catch(e) {
+    } catch (e) {
       console.log('setStore error')
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
     }
   }
   getStore() {
@@ -269,7 +309,8 @@ export default class ConfigManager {
       } else {
         return null
       }
-    } catch(e) {
+    } catch (e) {
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
       return null
     }
   }
@@ -281,7 +322,8 @@ export default class ConfigManager {
         delete _cache[key]
         this.storage.setItem(this.configKey, _cache)
       }
-    } catch(e) {
+    } catch (e) {
+      this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
       console.log('delete error')
     }
   }

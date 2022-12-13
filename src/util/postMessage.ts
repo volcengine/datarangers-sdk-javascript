@@ -5,7 +5,7 @@ export interface IDataObj {
   type: string;
   payload: object | [] | string;
 }
-export interface IDataReceive{
+export interface IDataReceive {
   referrer: string;
   type: string;
   payload: object | [] | string;
@@ -83,5 +83,10 @@ export function init(config: any, version: string) {
   if (typeof copyConfig['autotrack'] === 'object' && copyConfig['autotrack']['collect_url']) {
     delete copyConfig['autotrack']['collect_url']
   }
+  (window.opener || window.parent).postMessage({
+    type: 'tea:sdk:info',
+    config: copyConfig,
+    version
+  }, '*');
   window.addEventListener('message', processMsg, false);
 }

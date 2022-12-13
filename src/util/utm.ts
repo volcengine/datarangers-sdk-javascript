@@ -4,10 +4,10 @@ import Storage from './storage'
 const UTM = (app_id: number, urlQueryObj: any, domain: string, cookie_expire: number) => {
   const storage = new Storage(false)
   const session = new Storage(false, 'session')
-  const cacheKey = app_id ? `_rangers_utm_cache_${app_id}` : '_rangers_utm_cache'
+  const cacheKey = app_id ? `_tea_utm_cache_${app_id}` : '_tea_utm_cache'
   const sourceKey = app_id ? `_$utm_from_url_${app_id}` : '_$utm_from_url'
   let utmObj = {}
-  const tracer_data = ['tr_shareuser', 'tr_admaster', 'tr_param1', 'tr_param2','tr_param3','tr_param4', '$utm_from_url']
+  const tracer_data = ['tr_shareuser', 'tr_admaster', 'tr_param1', 'tr_param2', 'tr_param3', 'tr_param4', '$utm_from_url']
   let _utmObj = {
     ad_id: Number(urlQueryObj.ad_id) || undefined,
     campaign_id: Number(urlQueryObj.campaign_id) || undefined,
@@ -18,7 +18,7 @@ const UTM = (app_id: number, urlQueryObj: any, domain: string, cookie_expire: nu
     utm_term: urlQueryObj.utm_term,
     utm_content: urlQueryObj.utm_content,
     tr_shareuser: urlQueryObj.tr_shareuser,
-    tr_admaster:urlQueryObj.tr_admaster,
+    tr_admaster: urlQueryObj.tr_admaster,
     tr_param1: urlQueryObj.tr_param1,
     tr_param2: urlQueryObj.tr_param2,
     tr_param3: urlQueryObj.tr_param3,
@@ -42,7 +42,7 @@ const UTM = (app_id: number, urlQueryObj: any, domain: string, cookie_expire: nu
     if (utmFromUrl) {
       // 发现url上有则更新缓存，并上报
       session.setItem(sourceKey, '1')
-      storage.setCookie(cacheKey, JSON.stringify(utmObj), cookie_expire , domain)
+      storage.setCookie(cacheKey, JSON.stringify(utmObj), cookie_expire, domain)
     } else {
       // url没有则取缓存
       let cache = storage.getCookie(cacheKey, domain)

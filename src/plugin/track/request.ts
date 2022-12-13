@@ -1,4 +1,5 @@
 
+
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 
 import { EventInfo } from './type'
@@ -38,7 +39,7 @@ class Request {
       'report_beat_event'
     ]
   }
-  send( _eventInfo: EventInfo, _data: any) {
+  send(_eventInfo: EventInfo, _data: any) {
     const { eventSend } = _eventInfo
     const event = _data['event']
     delete _data['event']
@@ -51,7 +52,7 @@ class Request {
 
   get(url: string, options: RequestOptions) {
     const reqOptions: RequestOptions = {
-      headers: {'content-type': 'application/json'},
+      headers: { 'content-type': 'application/json' },
       method: 'GET'
     }
     const myOptions: Object = Object.assign(reqOptions, options)
@@ -60,7 +61,7 @@ class Request {
 
   post(url: string, options: RequestOptions) {
     const reqOptions: RequestOptions = {
-      headers: {'content-type': 'application/json'},
+      headers: { 'content-type': 'application/json' },
       method: 'POST'
     }
     const myOptions: Object = Object.assign(reqOptions, options)

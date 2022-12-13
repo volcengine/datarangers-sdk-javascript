@@ -11,14 +11,14 @@ const ERROR = {
   RESPONSE: 5001,
   TIMEOUT: 5005,
 }
-var isSupportBeacon = function(){
+var isSupportBeacon = function () {
   if (window.navigator && window.navigator.sendBeacon) {
     return true
   } else {
     return false
   }
 }
-var NOOP = () => {}
+var NOOP = () => { }
 var encodePayload = (obj: any) => {
   var string = ''
   for (var key in obj) {
@@ -30,7 +30,7 @@ var encodePayload = (obj: any) => {
   return string
 };
 
-var sendByImg = (url:string, data: any, success?:any, fail?:any) => {
+var sendByImg = (url: string, data: any, success?: any, fail?: any) => {
   try {
     var splitStringMatch = url.match(/\/v\d\//)
     var splitString = ''
@@ -61,11 +61,11 @@ var sendByImg = (url:string, data: any, success?:any, fail?:any) => {
     fail && fail(url, data, ERROR.IMG_CATCH, e.message)
   }
 }
-var request = (url:string, data:any, timeout?:number, withCredentials?: boolean, success?:any, fail?:any, sendBecon?:boolean) => {
+var request = (url: string, data: any, timeout?: number, withCredentials?: boolean, success?: any, fail?: any, sendBecon?: boolean, encryption?: boolean) => {
   var UA = window.navigator.userAgent
   var browserName = window.navigator.appName
   var isIE89 = browserName.indexOf('Microsoft Internet Explorer') !== -1 &&
-      (UA.indexOf('MSIE 8.0') !== -1 || UA.indexOf('MSIE 9.0') !== -1)
+    (UA.indexOf('MSIE 8.0') !== -1 || UA.indexOf('MSIE 9.0') !== -1)
   if (isIE89) {
     sendByImg(url, data, success, fail)
   } else {
@@ -84,7 +84,7 @@ var request = (url:string, data:any, timeout?:number, withCredentials?: boolean,
       return
     }
   }
-  fetch(url, data, timeout, withCredentials, success, fail)
+  fetch(url, data, timeout, withCredentials, success, fail, '', '', encryption)
 }
 
 export default request

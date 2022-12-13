@@ -37,7 +37,7 @@ export type ParamsStruct = {
   texts: Array<string>
   element_width?: number
   element_height?: number
-  touch_x?:number
+  touch_x?: number
   touch_y?: number
   href?: string
   src?: string

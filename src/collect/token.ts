@@ -1,8 +1,10 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import Types from './hooktype';
 import Storage from '../util/storage'
 import fetch from '../util/fetch'
 import { parseUrlQuery } from '../util/tool'
+import { DebuggerMesssge } from './hooktype'
 import localWebId from '../util/local'
 
 export default class Token {
@@ -24,7 +26,7 @@ export default class Token {
     this.config = config
     this.configManager = this.collect.configManager
     this.storage = new Storage(false)
-    this.tokenKey = `__rangers_cache_tokens_${config.app_id}`
+    this.tokenKey = `__tea_cache_tokens_${config.app_id}`
     this.enable_ttwebid = config.enable_ttwebid
     this.enableCustomWebid = config.enable_custom_webid
     this.collect.on(Types.ConfigUuid, (userUniqueId: string) => {
@@ -63,7 +65,7 @@ export default class Token {
       this.completeTtWid(this.cacheToken)
     } else {
       this.check()
-    } 
+    }
   }
   check() {
     if (!this.cacheToken || !this.cacheToken.web_id) {
@@ -81,13 +83,12 @@ export default class Token {
   }
   checkEnv() {
     const ua = window.navigator.userAgent
-    if (ua.indexOf('miniProgram') !== -1) {
+    if (ua.indexOf('miniProgram') !== -1 || ua.indexOf('MiniProgram') !== -1) {
       const urlQueryObj = parseUrlQuery(window.location.href)
       if (urlQueryObj && urlQueryObj['Web_ID']) {
-        const env_uuid = this.configManager.get('user_unique_id')
         this.complete({
           web_id: `${urlQueryObj['Web_ID']}`,
-          env_uuid
+          user_unique_id: this.configManager.get('user_unique_id') || `${urlQueryObj['Web_ID']}`
         })
         return true
       }
@@ -98,34 +99,57 @@ export default class Token {
 
   remoteWebid() {
     const fetchUrl = this.configManager.getUrl('webid')
-    fetch(fetchUrl, 
-      {
-        app_key: this.config.app_key,
-        app_id: this.config.app_id,
-        url: location.href,
-        user_agent: window.navigator.userAgent,
-        referer: document.referrer,
-        user_unique_id: '',
-      },
-      3000, false,
-      (data) =>{
+    const requestBody = {
+      app_key: this.config.app_key,
+      app_id: this.config.app_id,
+      url: location.href,
+      user_agent: window.navigator.userAgent,
+      referer: document.referrer,
+      user_unique_id: '',
+    }
+    this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 发起WEBID请求', logType: 'fetch', level: 'info', time: Date.now(), data: requestBody })
+    const localId = localWebId();
+    fetch(fetchUrl, requestBody,
+      300000, false,
+      (data) => {
+        let webid
         if (data && data.e === 0) {
-          this.complete({
-            web_id: this.configManager.get('web_id') || data.web_id,
-            user_unique_id: this.configManager.get('user_unique_id') || data.web_id
-          })
+          webid = data.web_id
+          this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'WEBID请求成功', logType: 'fetch', level: 'info', time: Date.now(), data: data })
         } else {
+          webid = localId
+          this.collect.configManager.set({
+            localWebId: localId
+          })
           this.collect.emit(Types.TokenError)
-          console.warn(`[]appid: ${this.config.app_id} webid error, init error~`)
+          this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'WEBID请求返回值异常', logType: 'fetch', level: 'warn', time: Date.now(), data: data })
+          this.collect.logger.warn(`appid: ${this.config.app_id} get webid error, use local webid~`)
         }
+        this.complete({
+          web_id: this.configManager.get('web_id') || webid,
+          user_unique_id: this.configManager.get('user_unique_id') || webid
+        })
       },
       () => {
+        this.complete({
+          web_id: this.configManager.get('web_id') || localId,
+          user_unique_id: this.configManager.get('user_unique_id') || localId
+        })
+        this.collect.configManager.set({
+          localWebId: localId
+        })
         this.collect.emit(Types.TokenError)
-        console.warn(`[]appid: ${this.config.app_id}, get webid error, init error~`)
+        this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'WEBID请求网络异常', logType: 'fetch', level: 'error', time: Date.now(), data: null })
+        this.collect.logger.warn(`appid: ${this.config.app_id}, get webid error, use local webid~`)
       })
   }
   complete(token: any) {
     const { web_id, user_unique_id } = token
+    if (!web_id && !user_unique_id) {
+      this.collect.emit(Types.TokenError);
+      console.warn('token error')
+      return
+    }
     token.timestamp = Date.now()
     this.collect.configManager.set({
       web_id,
@@ -146,7 +170,7 @@ export default class Token {
     this.collect.emit(Types.TokenComplete)
   }
   setUuid(uuid: string) {
-    if (!uuid) {
+    if (!uuid || ['null', 'undefined', 'Null', 'None'].indexOf(uuid) !== -1) {
       this.clearUuid()
     } else {
       let newUuid = String(uuid)
@@ -196,7 +220,7 @@ export default class Token {
     this.cacheToken.timestamp = Date.now()
     const env_webid = this.configManager.get('web_id')
     const env_uuid = this.configManager.get('user_unique_id')
-    if(!env_uuid || (env_uuid === env_webid)) {
+    if (!env_uuid || (env_uuid === env_webid)) {
       this.configManager.set({
         user_unique_id: web_id
       })
@@ -209,7 +233,7 @@ export default class Token {
       this.collect.emit(Types.TokenChange, 'webid')
     }
     this.setStorage(this.cacheToken)
-    
+
   }
   setStorage(token: any) {
     token._type_ = this.enableCustomWebid ? 'custom' : 'default'
@@ -223,20 +247,21 @@ export default class Token {
     this.cacheToken = token
   }
   getReady() {
-    return this.tokenReady
+    return this.tokenReady;
   }
   getTobId() {
-    const tobUrl = this.configManager.getUrl('tobid')
+    const tobUrl = this.configManager.getUrl('tobid');
     return new Promise(resolve => {
       fetch(tobUrl,
         {
           app_id: this.config.app_id,
           user_unique_id: this.configManager.get('user_unique_id'),
           web_id: this.configManager.get('web_id'),
+          user_unique_id_type: this.configManager.get('user_unique_id_type')
         },
         30000,
         this.enable_ttwebid,
-        (data) =>{
+        (data) => {
           if (data && data.e === 0) {
             resolve(data.tobid)
           } else {

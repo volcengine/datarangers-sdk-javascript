@@ -1,5 +1,5 @@
-
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 import Cookies from 'js-cookie';
 class Memory {
   cache: any
@@ -53,7 +53,7 @@ const local = {
         if (value && typeof value === 'string') {
           ret = JSON.parse(value)
         }
-      } catch (e) {}
+      } catch (e) { }
 
       return ret || {}
     } catch (e) { }
@@ -63,14 +63,14 @@ const local = {
     try {
       var stringValue = typeof value === 'string' ? value : JSON.stringify(value)
       localStorage.setItem(key, stringValue)
-    } catch (e) {}
+    } catch (e) { }
   },
   removeItem(key) {
     try {
       localStorage.removeItem(key)
-    } catch (e) {}
+    } catch (e) { }
   },
-  getCookie(name: string, domain?: string){
+  getCookie(name: string, domain?: string) {
     try {
       var _matches = Cookies.get(name, { domain: domain || document.domain })
       return _matches
@@ -102,7 +102,7 @@ const session = {
         if (value && typeof value === 'string') {
           ret = JSON.parse(value)
         }
-      } catch (e) {}
+      } catch (e) { }
 
       return ret || {}
     } catch (e) { }
@@ -112,12 +112,12 @@ const session = {
     try {
       var stringValue = typeof value === 'string' ? value : JSON.stringify(value)
       sessionStorage.setItem(key, stringValue)
-    } catch (e) {}
+    } catch (e) { }
   },
   removeItem(key) {
     try {
       sessionStorage.removeItem(key)
-    } catch (e) {}
+    } catch (e) { }
   },
   getCookie(name) {
     this.getItem(name)

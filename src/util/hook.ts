@@ -70,7 +70,7 @@ class Hook {
         this._hooksCache[wait][type].push(info)
       }
     }
-    
+
   }
   _emit(type: string, info?: THookInfo) {
     if (!type || !this._hooks[type] || !this._hooks[type].length) {
@@ -85,7 +85,7 @@ class Hook {
     });
   }
   set(type: string) {
-    if(!type || this._cache.indexOf(type) !== -1) {
+    if (!type || this._cache.indexOf(type) !== -1) {
       return
     }
     this._cache.push(type)

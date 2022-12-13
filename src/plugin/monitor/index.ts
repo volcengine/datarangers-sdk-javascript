@@ -1,4 +1,6 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
+import { SDK_TYPE } from '../../collect/constant'
 export default class Monitor {
   sdkReady: boolean
   config: any
@@ -17,11 +19,12 @@ export default class Monitor {
     this.collect.on(Types.Ready, () => {
       this.sdkOnload()
     })
-    this.collect.on(Types.SubmitError, ({eventData, errorCode}) => {
+    this.collect.on(Types.SubmitError, ({ type, eventData, errorCode }) => {
+      if (type !== 'f_data') return;
       this.sdkError(eventData, errorCode)
     })
   }
-  sdkOnload(){
+  sdkOnload() {
     try {
       const { header, user } = this.collect.configManager.get()
       const { app_id, app_name, sdk_version } = header
@@ -32,7 +35,7 @@ export default class Monitor {
           app_id,
           app_name: app_name || '',
           sdk_version,
-          sdk_type: 'script',
+          sdk_type: SDK_TYPE,
           sdk_config: this.config,
           sdk_desc: 'TOB'
         }),
@@ -46,7 +49,7 @@ export default class Monitor {
         header: {},
       }
       setTimeout(() => {
-        this.fetch(this.url, [loadData], 30000, false, ()=>{},()=>{}, '566f58151b0ed37e')
+        this.fetch(this.url, [loadData], 30000, false, () => { }, () => { }, '566f58151b0ed37e')
       }, 16)
     } catch (e) {
     }
@@ -85,7 +88,7 @@ export default class Monitor {
         },
       }
       setTimeout(() => {
-        this.fetch(this.url, [errData], 30000, false, ()=>{},()=>{}, '566f58151b0ed37e')
+        this.fetch(this.url, [errData], 30000, false, () => { }, () => { }, '566f58151b0ed37e')
       }, 16)
     } catch (e) {
     }

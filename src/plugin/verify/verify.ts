@@ -1,4 +1,6 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
+// web埋点实时验证
 import { isArray } from '../../util/tool'
 interface IData {
 	type: string;
@@ -64,7 +66,7 @@ export default class Verify {
 		this.verifyReady = true;
 		this.sign = rawData.sign;
 		this.origin = event.origin;
-		this.cacheStorgae.setItem(this.verifyCookieKey, JSON.stringify({sign: rawData.sign, origin: event.origin}));
+		this.cacheStorgae.setItem(this.verifyCookieKey, JSON.stringify({ sign: rawData.sign, origin: event.origin }));
 		if (this.eventStorage.length) {
 			this.postVerify(this.eventStorage, rawData.sign, event.origin);
 		}
