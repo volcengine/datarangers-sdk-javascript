@@ -1,11 +1,14 @@
 {
   "name": "@datarangers/sdk-javascript",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "scripts": {
     "nclean": "rimraf es lib core",
     "build": "export NODE_ENV=production && npm run nclean && npx rollup -c rollup.config.js",
     "build-core": "export NODE_ENV=production && npx rollup -c rollup.config.polyfill.js"
   },
+  "main": "lib/index.min.js",
+  "module": "es/index.min.js",
+  "types": "./types/types.d.ts",
   "license": "ISC",
   "dependencies": {
     "js-cookie": "^3.0.1"
