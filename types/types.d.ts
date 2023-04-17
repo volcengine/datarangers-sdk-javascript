@@ -3,55 +3,8 @@ export interface IInitParam {
   channel?: 'cn' | 'va' | 'sg';
   channel_domain?: string;
   app_key?: string;
-  caller?: string;
   log?: boolean;
-  disable_webid?: boolean;
-  disable_sdk_monitor?: boolean;
-  disable_storage?: boolean;
-  autotrack?: any;
-  enable_stay_duration?: any;
-  disable_route_report?: boolean;
-  disable_session?: boolean;
-  disable_heartbeat?: boolean;
   disable_auto_pv?: boolean;
-  enable_tracer?: boolean;
-  enable_spa?: boolean;
-  event_verify_url?: string;
-  enable_ttwebid?: boolean;
-  user_unique_type?: string;
-  enable_ab_test?: boolean;
-  max_storage_num?: number;
-  enable_storage?: boolean;
-  enable_cookie?: boolean;
-  enable_ab_visual?: boolean;
-  cross_subdomain?: boolean;
-  cookie_domain?: string;
-  enable_multilink?: boolean;
-  multilink_timeout_ms?: number;
-  reportTime?: number;
-  timeout?: number;
-  max_report?: number;
-  report_url?: string;
-  maxDuration?: number;
-  ab_channel_domain?: string;
-  configPersist?: number;
-  extend?: any;
-  ab_timeout?: number;
-  disable_tracer?: boolean;
-  extendConfig?: any;
-  filter?: any;
-  cep?: boolean;
-  cep_url?: string;
-  spa?: boolean;
-  cookie_expire?: number;
-  enable_custom_webid?: boolean;
-  disable_track_event?: boolean;
-  visual_container_id?: boolean;
-  visual_domain?: string;
-  exposure_limit?: number;
-  ab_batch_time?: number;
-  allow_hash?: boolean;
-  enable_native?: boolean;
 }
 
 export interface IConfigParam {
@@ -113,14 +66,6 @@ export type SdkOption = Omit<IInitParam, 'app_id'>;
 
 export type SdkHookListener = (hookInfo?: any) => void;
 
-export interface Plugin {
-  apply(sdk: Sdk, options: SdkOption): void;
-}
-export interface PluginConstructor {
-  new(): Plugin;
-  pluginName?: string;
-  init?(Sdk: SdkConstructor): void;
-}
 
 export declare enum SdkHook {
   Init = 'init',
@@ -132,69 +77,17 @@ export declare enum SdkHook {
   TokenFetch = 'token-fetch',
   TokenError = 'token-error',
   ConfigUuid = 'config-uuid',
-  ConfigWebId = 'config-webid',
   ConfigDomain = 'config-domain',
-  CustomWebId = 'custom-webid',
   TokenChange = 'token-change',
   TokenReset = 'token-reset',
-  ConfigTransform = 'config-transform',
-  EnvTransform = 'env-transform',
   SessionReset = 'session-reset',
   SessionResetTime = 'session-reset-time',
   Event = 'event',
   Events = 'events',
-  EventNow = 'event-now',
-  CleanEvents = 'clean-events',
-  BeconEvent = 'becon-event',
-  SubmitBefore = 'submit-before',
-  SubmitScuess = 'submit-scuess',
-  SubmitAfter = 'submit-after',
-  SubmitError = 'submit-error',
-  SubmitVerify = 'submit-verify',
-  SubmitVerifyH = 'submit-verify-h5',
-
-  Stay = 'stay',
-  ResetStay = 'reset-stay',
-  StayReady = 'stay-ready',
-  SetStay = 'set-stay',
-
-  RouteChange = 'route-change',
-  RouteReady = 'route-ready',
-
-  Ab = 'ab',
-  AbVar = 'ab-var',
-  AbAllVars = 'ab-all-vars',
-  AbConfig = 'ab-config',
-  AbExternalVersion = 'ab-external-version',
-  AbVersionChangeOn = 'ab-version-change-on',
-  AbVersionChangeOff = 'ab-version-change-off',
-  AbOpenLayer = 'ab-open-layer',
-  AbCloseLayer = 'ab-close-layer',
-  AbReady = 'ab-ready',
-  AbComplete = 'ab-complete',
-  AbTimeout = 'ab-timeout',
-
-  Profile = 'profile',
-  ProfileSet = 'profile-set',
-  ProfileSetOnce = 'profile-set-once',
-  ProfileUnset = 'profile-unset',
-  ProfileIncrement = 'profile-increment',
-  ProfileAppend = 'profile-append',
-  ProfileClear = 'profile-clear',
-
-  TrackDuration = 'track-duration',
-  TrackDurationStart = 'track-duration-start',
-  TrackDurationEnd = 'track-duration-end',
-  TrackDurationPause = 'track-duration-pause',
-  TrackDurationResume = 'tracl-duration-resume',
-
-  Autotrack = 'autotrack',
-  AutotrackReady = 'autotrack-ready'
 }
 interface SdkConstructor {
   new(name: string): Sdk;
   instances: Array<Sdk>;
-  usePlugin: (plugin: PluginConstructor, pluginName?: string) => void;
 }
 interface Sdk {
   Types: typeof SdkHook;
@@ -203,10 +96,8 @@ interface Sdk {
   once(type: string, hook: SdkHookListener): void;
   off(type: string, hook?: SdkHookListener): void;
   emit(type: string, info?: any, wait?: string): void;
-
   init(options: IInitParam): void;
   config(configs?: IConfigParam): void;
-  setDomain(domain: string): void;
   getConfig(key?: string): Record<string, any>;
   start(): void;
   send(): void;
@@ -217,33 +108,7 @@ interface Sdk {
     events:
       | Array<[string, EventParams] | [string, EventParams, number]>
   ): void;
-  filterEvent(filter: any): void;
   predefinePageView(params: any): void;
-  clearEventCache(): void;
-  setWebIDviaUnionID(unionId: string): void;
-  setWebIDviaOpenID(openId): void;
-  getToken(callback: (info: Record<string, string | number>) => void, timeout?: number): void;
-
-  resetStayDuration(url_path?: string, title?: string, url?: string): void;
-
-  resetStayParams(url_path?: string, title?: string, url?: string): void;
-
-  profileSet(profile: any): void;
-  profileSetOnce(profile: any): void;
-  profileIncrement(profile: any): void;
-  profileUnset(key: string): void;
-  profileAppend(profile: any): void;
-
-  setExternalAbVersion(vids: string): void;
-  getVar(name: string, defaultValue: any, callback: (value: any) => void): void;
-  getAllVars(callback: (value: any) => void): void;
-  getAbSdkVersion(): string;
-  onAbSdkVersionChange(callback: (vids: string) => void): () => void;
-  offAbSdkVersionChange(callback: (vids: string) => void): void;
-  setExternalAbVersion(vids: string | null): void;
-  getABConfig(params: Record<string, any>, callback: (value: any) => void): void;
-  openOverlayer(): void;
-  closeOverlayer(): void;
 }
 declare const Sdk: Sdk;
 export const Collector: SdkConstructor;

@@ -16,8 +16,6 @@ enum Types {
   SessionResetTime = 'session-reset-time',
   Event = 'event',
   Events = 'events',
-  EventNow = 'event-now',
-  CleanEvents = 'clean-events',
   BeconEvent = 'becon-event',
 
 }
