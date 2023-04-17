@@ -5,7 +5,8 @@ English | [简体中文](./README.zh-CN.md)
 ## Sample
 
 ```javascript
-npm install
+lite version
+npm install @datarangers/sdk-javascript@lite
 npm run build
 ```
 
