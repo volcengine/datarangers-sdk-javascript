@@ -1,6 +1,5 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 
-import UTM from './utm'
 import { parseURL, parseUrlQuery } from './tool'
 class Client {
   appid: number
@@ -8,13 +7,10 @@ class Client {
   userAgent: string
   appVersion: string
   utm: any
-  cookie_expire: number
-  constructor(app_id: number, domain: string, cookie_expire: number) {
+  constructor(app_id: number) {
     this.appid = app_id
-    this.domain = domain
     this.userAgent = window.navigator.userAgent
     this.appVersion = window.navigator.appVersion
-    this.cookie_expire = cookie_expire
   }
   init() {
     const userAgent = window.navigator.userAgent
@@ -24,7 +20,6 @@ class Client {
     const urlQueryObj = parseUrlQuery(window.location.href)
     const platform = /Mobile|htc|mini|Android|iP(ad|od|hone)/.test(this.appVersion) ? 'wap' : 'web'
 
-    this.utm = UTM(this.appid, urlQueryObj, this.domain, this.cookie_expire)
     const _browser = this.browser()
     const _os = this.os()
     return {
@@ -40,26 +35,7 @@ class Client {
       language,
       referrer,
       referrer_host,
-      utm: this.utm,
-      latest_data: this.last(referrer, referrer_host)
     }
-  }
-  last(referrer: string, referrer_host: string) {
-    let $latest_referrer = ''
-    let $latest_referrer_host = ''
-    let $latest_search_keyword = ''
-    const hostname = location.hostname
-    let isLast = false
-    if (referrer && referrer_host && hostname !== referrer_host) {
-      $latest_referrer = referrer
-      $latest_referrer_host = referrer_host
-      isLast = true
-      const referQuery = parseUrlQuery(referrer)
-      if (referQuery['keyword']) {
-        $latest_search_keyword = referQuery['keyword']
-      }
-    }
-    return { $latest_referrer, $latest_referrer_host, $latest_search_keyword, isLast }
   }
   browser() {
     let browser = ''

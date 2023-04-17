@@ -41,20 +41,6 @@ const decrypto = (str, xor, hex) => {
   return resultStr;
 }
 
-export const encodeBase64 = (string) => {
-  if (window.btoa) {
-    return window.btoa(encodeURIComponent(string));
-  }
-  return encodeURIComponent(string);
-}
-
-export const decodeBase64 = (string) => {
-  if (window.atob) {
-    return decodeURIComponent(window.atob(string));
-  }
-  return decodeURIComponent(string);
-}
-
 export const decodeUrl = string => decrypto(string, 64, 25);
 
 export const beforePageUnload = (fn) => {
@@ -66,77 +52,6 @@ export const beforePageUnload = (fn) => {
   }
 }
 
-export const getIframeUrl = function () {
-  try {
-    var name = JSON.parse(atob(window.name))
-    if (name) {
-      return name
-    } else {
-      return undefined
-    }
-  } catch (e) {
-    return undefined
-  }
-}
-
-export const splitArrayByFilter = (list = [], valueFn = item => item, threshold = 20) => {
-  const result = [];
-  let index = 0;
-  let prev;
-  list.forEach((item) => {
-    const cur = valueFn(item);
-    if (typeof prev === 'undefined') {
-      prev = cur;
-    } else if (cur !== prev || result[index].length >= threshold) {
-      index += 1;
-      prev = cur;
-    }
-    result[index] = result[index] || [];
-    result[index].push(item);
-  });
-
-  return result;
-}
-
-export const loadScript = (src, success, error) => {
-  const script = document.createElement('script');
-  script.src = src;
-
-  script.onerror = function () {
-    error(src);
-  };
-
-  script.onload = function () {
-    success();
-  };
-
-  document.getElementsByTagName('head')[0].appendChild(script);
-}
-
-export const isSupVisChange = () => {
-  let flag = 0;
-  ['hidden', 'msHidden', 'webkitHidden'].forEach(hidden => {
-    if (document[hidden] !== undefined) {
-      flag = 1
-    }
-  })
-  return flag
-}
-
-export const selfAdjust = (cb = () => undefined, interval = 1000) => {
-  let expected = Date.now() + interval
-  let timerHander: number
-  function step() {
-    const dt = Date.now() - expected
-    cb()
-    expected += interval
-    timerHander = window.setTimeout(step, Math.max(0, interval - dt))
-  }
-  timerHander = window.setTimeout(step, interval)
-  return () => {
-    window.clearTimeout(timerHander)
-  }
-}
 export const stringify = (origin, path: any = '', query = {}) => {
   let str = origin
   str = str.split('#')[0].split('?')[0]
@@ -181,22 +96,4 @@ export const parseUrlQuery = (url: string) => {
     })
   } catch (e) { }
   return queryObj
-}
-
-export const hashCode = (str: string): number => {
-  str += '';
-  let h = 0;
-  let off = 0;
-  const len = str.length;
-
-  for (let i = 0; i < len; i++) {
-    h = 31 * h + str.charCodeAt(off++);
-    if (h > 0x7fffffffffff || h < -0x800000000000) {
-      h &= 0xffffffffffff;
-    }
-  }
-  if (h < 0) {
-    h += 0x7ffffffffffff;
-  }
-  return h;
 }

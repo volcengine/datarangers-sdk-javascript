@@ -15,12 +15,6 @@ export default function fetch(url: string, data: any, timeout?: number, withCred
     var _method = method || 'POST'
     xhr.open(_method, `${url}`, true)
     xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8')
-    if (app_key) {
-      xhr.setRequestHeader('X-MCS-AppKey', `${app_key}`)
-    }
-    if (withCredentials) {
-      xhr.withCredentials = true
-    }
     if (timeout) {
       xhr.timeout = timeout
       xhr.ontimeout = () => {
