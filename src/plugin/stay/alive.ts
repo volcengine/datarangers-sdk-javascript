@@ -1,9 +1,9 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 
-import { isSupVisChange, beforePageUnload, isObject } from '../../util/tool'
+import { isSupVisChange, isObject } from '../../util/tool'
 interface Option {
   aliveName?: string,
-  params?: any
+  params?: Record<string, any> | Function
 }
 export default class Alive {
   collect: any
@@ -21,6 +21,7 @@ export default class Alive {
   aliveDTime: number = 60 * 1000
   aliveName: string
   disableCallback: any
+  customParmas: Record<string, any>
   options: Option = { aliveName: 'predefine_page_alive', params: {} }
   constructor(collect: any, config: any) {
     this.collect = collect
@@ -37,11 +38,21 @@ export default class Alive {
     this.set_url = url
     this.set_title = title
   }
-  enable(url_path: string, title: string, url: string) {
+  resetParams(url_path: string, title: string, url: string) {
     this.url_path = url_path
     this.url = url
     this.title = title
+  }
+  enable(url_path: string, title: string, url: string) {
+    this.url_path = url_path || this.url_path
+    this.url = url || this.url
+    this.title = title || this.title
     this.disableCallback = this.enablePageAlive()
+    if (this.options.params instanceof Function) {
+      this.customParmas = this.options.params()
+    } else {
+      this.customParmas = this.options.params;
+    }
   }
 
   disable() {
@@ -54,6 +65,7 @@ export default class Alive {
     if (duration < 0 || duration > this.aliveDTime || (Date.now() - this.pageStartTime > this.maxDuration)) {
       return
     }
+
     this.collect.beconEvent(this.options.aliveName, {
       url_path: this.getParams('url_path'),
       title: this.getParams('title'),
@@ -63,9 +75,10 @@ export default class Alive {
       startTime: this.sessionStartTime,
       hidden: document.visibilityState,
       leave,
-      ...this.options.params
+      ...this.customParmas
     })
     this.sessionStartTime = Date.now()
+    this.resetParams(location.pathname, document.title, location.href)
   }
 
   getParams(type: string) {
@@ -110,7 +123,7 @@ export default class Alive {
     const change = this.visibilitychange.bind(this)
     const before = this.beforeunload.bind(this)
     document.addEventListener('visibilitychange', change)
-    beforePageUnload(before)
+    window.addEventListener('pagehide', before)
     return () => {
       this.beforeunload()
       document.removeEventListener('visibilitychange', change)

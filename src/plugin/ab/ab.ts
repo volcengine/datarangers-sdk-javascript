@@ -1,5 +1,4 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
-
 import { openOverlayer, closeOverlayer } from './layer';
 import { AB_DOMAINS } from '../../collect/constant'
 import '../../util/url-polyfill'
@@ -76,9 +75,15 @@ export default class Ab {
     this.ab_batch_time = config.ab_batch_time || 500;
     const { Types } = this.collect;
     this.types = Types
-    this.collect.on(Types.TokenChange, (tokenType: string) => {
+    this.collect.on(Types.TokenChange, (tokenInfo: { type: string, id: string }) => {
       if (disable_ab_reset) return;
-      if (tokenType !== 'uuid') return;
+      if (tokenInfo.type !== 'uuid') return;
+      if (!this.readyStatus) return;
+      this.clearCache();
+      this.fetchAB();
+    });
+    this.collect.on(Types.TokenReset, () => {
+      if (disable_ab_reset) return;
       if (!this.readyStatus) return;
       this.clearCache();
       this.fetchAB();
@@ -338,7 +343,8 @@ export default class Ab {
     }
   }
   report() {
-    this.fetch(this.reportUrl, this.exposureCache, 20000);
+    const encodeData = this.collect.cryptoData(this.exposureCache);
+    this.fetch(this.reportUrl, encodeData, 100000, false, () => { }, () => { }, '', 'POST', this.config.enable_encryption, this.config.encryption_header)
     this.exposureCache.forEach(item => {
       this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报成功', time: Date.now(), data: [item], code: 200, status: 'success' })
     })
@@ -411,6 +417,7 @@ export default class Ab {
     this.extVersions = [];
     this.mulilinkVersions = [];
     this.versions = [];
+    this.collect.configManager.clearAbCache();
   }
   openOverlayer(timeout?: number) {
     openOverlayer();
@@ -489,29 +496,50 @@ export default class Ab {
   }
   fetchAB(callback?: any) {
     const env = this.collect.configManager.get();
+    const { header, user } = env;
+    if (this.config.enable_anonymousid) {
+      delete user.web_id;
+    }
+    const fetchUuid = user.user_unique_id;
     const requestBody = {
       header: {
         aid: this.config.app_id,
-        ...(env.user || {}),
-        ...(env.header || {}),
+        ...(user || {}),
+        ...(header || {}),
         ab_sdk_version: this.collect.configManager.getAbVersion(),
         ab_url: window.location.href
       },
     }
     this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 发起AB实验请求', level: 'info', logType: 'fetch', time: Date.now(), data: requestBody })
+    const cryptoData = this.collect.cryptoData(requestBody)
     this.fetch(
-      this.fetchUrl, requestBody,
+      this.fetchUrl, cryptoData,
       this.config.ab_timeout || 3000,
       false,
       (response) => {
         this.fetchStatus = 'complete';
         this.refreshFetchStatus = 'complete';
+        // let aa = {
+        //   message: "success",
+        //   data: {
+        //     abcdefg: { val: "gss", vid: "11407" },
+        //     erf: { val: 'name', vid: "22" },
+        //     hhhhh: { val: 'age', vid: "33" },
+        //     juuioh: { val: 'sex', vid: "44" },
+        //     $ab_url: { val: 'http://0.0.0.0:8898/index_cdn_5.html?s=2', vid: '0000' }
+        //   }
+        // }
+        // if (env.user.user_unique_id === 'bbbb') {
+        //   aa.data.abcdefg.vid = '11408'
+        // } else if (env.user.user_unique_id === 'cccc') {
+        //   aa.data.abcdefg.vid = '11409'
+        // }
         const { data, message } = response; // 解析出code
         if (message === 'success') {
-          this.fetchComplete(data, env.user.user_unique_id);
+          this.fetchComplete(data, fetchUuid);
           callback && callback(data);
         } else {
-          this.fetchComplete(null, env.user.user_unique_id);
+          this.fetchComplete(null, fetchUuid);
           callback && callback(null);
         }
         this.collect.emit(this.types.AbComplete, data)
@@ -520,11 +548,12 @@ export default class Ab {
       () => {
         this.fetchStatus = 'complete';
         this.refreshFetchStatus = 'complete';
-        this.fetchComplete(null, env.user.user_unique_id);
+        this.fetchComplete(null, fetchUuid);
         callback && callback(null);
         this.collect.emit(this.types.AbTimeout)
         this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, secType: 'AB', info: 'AB实验请求网络异常', level: 'error', logType: 'fetch', time: Date.now() })
-      }
+      },
+      '', '', this.config.enable_encryption, this.config.encryption_header
     );
   }
   filterUrl(url: string) {

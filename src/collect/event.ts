@@ -1,16 +1,17 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 
 import Types from './hooktype';
+import { IInitParam } from '../../types/types'
 import Storage from '../util/storage'
 import request from '../util/request'
-import { beforePageUnload, encodeBase64 } from '../util/tool'
+import { beforePageUnload, encodeBase64, decodeBase64 } from '../util/tool'
 import { DebuggerMesssge } from './hooktype';
-import EventCheck from '../plugin/check/check'
+import EventCheck from '../plugin/check/check';
 
 type TEvent = any;
 export default class Event {
   collect: any
-  config: any
+  config: IInitParam
   configManager: any
   eventKey: string
   beconKey: string
@@ -26,7 +27,8 @@ export default class Event {
   eventCache: TEvent[] = []
   beconEventCache: TEvent[] = []
   eventCheck: any
-  apply(collect: any, config: any) {
+  refer_key: string
+  apply(collect: any, config: IInitParam) {
     this.collect = collect
     this.config = config
     this.configManager = collect.configManager
@@ -40,6 +42,7 @@ export default class Event {
     this.eventKey = `__tea_cache_events_${this.configManager.get('app_id')}`
     this.beconKey = `__tea_cache_events_becon_${this.configManager.get('app_id')}`
     this.abKey = `__tea_sdk_ab_version_${this.configManager.get('app_id')}`
+    this.refer_key = `__tea_cache_refer_${this.configManager.get('app_id')}`
     this.collect.on(Types.Ready, () => {
       this.reportAll(false)
     })
@@ -136,15 +139,42 @@ export default class Event {
       this.send(mergeData, becon);
     }
   }
+  handleRefer() {
+    let refer = ''
+    try {
+      if (this.config.spa || this.config.autotrack) {
+        const cache_local = this.localStorage.getItem(this.refer_key) || {}
+        if (cache_local.routeChange) {
+          // 已经发生路由变化
+          refer = cache_local.refer_key;
+        } else {
+          // 首页，用浏览器的refer
+          refer = this.configManager.get('referrer');
+        }
+      } else {
+        refer = this.configManager.get('referrer');
+      }
+    } catch (e) {
+      refer = document.referrer;
+    }
+    return refer
+  }
   merge(events: any, ignoreEvtParams?: boolean) {
     const { header, user } = this.configManager.get()
+    header.referrer = this.handleRefer();
     header.custom = JSON.stringify(header.custom)
     const evtParams = this.configManager.get('evtParams')
     const type = this.configManager.get('user_unique_id_type')
     const mergeEvents = events.map(item => {
       try {
         if (Object.keys(evtParams).length && !ignoreEvtParams) {
-          item.params = { ...evtParams, ...item.params }
+          item.params = { ...item.params, ...evtParams }
+        }
+        if (this.collect.dynamicParamsFilter) {
+          const dynamic = this.collect.dynamicParamsFilter();
+          if (Object.keys(dynamic).length) {
+            item.params = { ...item.params, ...dynamic }
+          }
         }
         if (type) {
           item.params['$user_unique_id_type'] = type
@@ -171,6 +201,9 @@ export default class Event {
     if (!Object.keys(user).length) {
       console.warn('user info error，cant report')
       return mergeData
+    }
+    if (this.config.enable_anonymousid) {
+      delete user.web_id;
     }
     const resultEvent = JSON.parse(
       JSON.stringify({
@@ -215,9 +248,8 @@ export default class Event {
         this.eventCheck.checkVerify(checkItem);
         if (!reportItem.length) return;
         this.collect.emit(Types.SubmitBefore, reportItem);
-        this.collect.emit(Types.SubmitVerify, reportItem);
-        // const encodeItem = this.config.disable_encryption ? reportItem : `data=${encodeBase64(JSON.stringify(reportItem))}`;
-        request(this.reportUrl, reportItem, this.timeout, false,
+        const encodeItem = this.collect.cryptoData(reportItem);
+        request(this.reportUrl, encodeItem, this.timeout, false,
           (res, data) => {
             if (res && res.e !== 0) {
               this.collect.emit(Types.SubmitError, { type: 'f_data', eventData: data, errorCode: res.e, response: res });
@@ -232,10 +264,9 @@ export default class Event {
             this.collect.emit(Types.SubmitError, { type: 'f_net', eventData, errorCode })
             this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报网络异常', time: Date.now(), data: checkItem, code: errorCode, failType: '网络异常', status: 'fail' })
 
-          }, becon, false
+          }, becon, this.config.enable_encryption, this.config.encryption_header
         )
         this.eventCheck.checkVerify(reportItem);
-        this.collect.emit(Types.SubmitVerify, reportItem);
         this.collect.emit(Types.SubmitVerifyH, reportItem);
         this.collect.emit(Types.SubmitAfter, reportItem);
       } catch (e) {

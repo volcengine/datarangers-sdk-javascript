@@ -1,10 +1,10 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 
-import { isSupVisChange, beforePageUnload, isObject } from '../../util/tool'
+import { isSupVisChange, isObject } from '../../util/tool'
 
 interface Option {
   closeName?: string,
-  params?: any
+  params?: Record<string, any> | Function
 }
 export default class Close {
   collect: any
@@ -27,6 +27,7 @@ export default class Close {
   activeTimes: number
   totalTime: number
   disableCallback: any
+  customParmas: Record<string, any>
   constructor(collect: any, config: any) {
     this.collect = collect
     this.config = config
@@ -43,11 +44,15 @@ export default class Close {
     this.set_url = url
     this.set_title = title
   }
-
-  enable(url_path: string, title: string, url: string) {
+  resetParams(url_path: string, title: string, url: string) {
     this.url_path = url_path
     this.url = url
     this.title = title
+  }
+  enable(url_path: string, title: string, url: string) {
+    this.url_path = url_path || this.url_path
+    this.url = url || this.url
+    this.title = title || this.title
     this.disableCallback = this.enablePageClose()
   }
 
@@ -60,6 +65,12 @@ export default class Close {
     this.activeEndTime = undefined
     this.activeTimes = 1
     this.totalTime = 0
+    if (this.options.params instanceof Function) {
+      this.customParmas = this.options.params()
+    } else {
+      this.customParmas = this.options.params;
+    }
+    this.resetParams(location.pathname, document.title, location.href)
   }
 
   sendEventPageClose() {
@@ -75,9 +86,10 @@ export default class Close {
       duration: this.totalTime,
       total_duration: total_duration,
       is_support_visibility_change: isSupVisChange(),
-      ...this.options.params
+      ...this.customParmas
     })
     this.pageStartTime = Date.now()
+
     this.resetData()
   }
 
@@ -125,7 +137,7 @@ export default class Close {
     const change = this.visibilitychange.bind(this)
     const before = this.beforeunload.bind(this)
     document.addEventListener('visibilitychange', change)
-    beforePageUnload(before)
+    window.addEventListener('pagehide', before)
     return () => {
       this.beforeunload()
       document.removeEventListener('visibilitychange', change)

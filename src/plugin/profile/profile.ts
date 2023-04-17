@@ -68,7 +68,9 @@ export default class Profile {
       let profileEvent = []
       profileEvent.push(this.collect.processEvent(eventName, params))
       let data = this.collect.eventManager.merge(profileEvent, true)
-      this.fetch(this.reportUrl, data)
+      const encodeData = this.collect.cryptoData(data);
+      const url = this.collect.configManager.getUrl('profile')
+      this.fetch(url, encodeData, 100000, false, () => { }, () => { }, '', 'POST', this.config.enable_encryption, this.config.encryption_header)
       this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报成功', time: Date.now(), data: data, code: 200, status: 'success' })
     } catch (e) {
       this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });

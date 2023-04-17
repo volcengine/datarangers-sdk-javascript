@@ -17,6 +17,7 @@ const tz_offset = timeZoneMin * 60
 const WEBID_URL = '/webid'
 const TOB_URL = '/tobid'
 const REPORT_URL = '/list'
+const PROFILE_URL = '/profile/list'
 const EXPIRE_TIME = 60 * 60 * 1000 * 24 * 90
 
 export default class ConfigManager {
@@ -69,6 +70,7 @@ export default class ConfigManager {
         web_id: undef,
         ip_addr_id: undef,
         user_unique_id_type: undef,
+        anonymous_id: undef,
       },
       header: {
         app_id: undef,
@@ -172,6 +174,10 @@ export default class ConfigManager {
   getAbCache() {
     return this.ab_cache;
   }
+  clearAbCache() {
+    this.ab_cache = {};
+    this.ab_version = '';
+  }
   setAbVersion(vid: string) {
     this.ab_version = vid
   }
@@ -182,7 +188,7 @@ export default class ConfigManager {
     let report = ''
     switch (type) {
       case 'event':
-        report = this.initConfig.report_url || REPORT_URL
+        report = REPORT_URL
         break;
       case 'webid':
         report = WEBID_URL
@@ -190,15 +196,17 @@ export default class ConfigManager {
       case 'tobid':
         report = TOB_URL
         break;
+      case 'profile':
+        report = PROFILE_URL
     }
     let query = ''
     if (this.initConfig.caller) {
       query = `?sdk_version=${SDK_VERSION}&sdk_name=web&app_id=${this.initConfig.app_id}&caller=${this.initConfig.caller}`
     }
-    // if (!this.initConfig.disable_encryption && type === 'event') {
-    //   query = this.initConfig.caller ? `${query}&encryption=1` : `${query}?encryption=1`
-    // }
-    return `${this.getDomain()}${report}${query}`
+    if (this.initConfig.enable_encryption && type === 'event' && this.initConfig.encryption_type !== 'sm') {
+      query = this.initConfig.caller ? `${query}&encryption=1` : `${query}?encryption=1`
+    }
+    return this.initConfig.report_url ? `${this.initConfig.report_url}${query}` : `${this.getDomain()}${report}${query}`
   }
   setCustom(commonInfo) {
     if (commonInfo && commonInfo.latest_data && commonInfo.latest_data.isLast) {
@@ -249,7 +257,7 @@ export default class ConfigManager {
         } else if (Object.hasOwnProperty.call(this.envInfo.user, key)) {
           if (['user_type', 'ip_addr_id'].indexOf(key) > -1) {
             this.envInfo.user[key] = info[key] ? Number(info[key]) : info[key]
-          } else if (['user_id', 'web_id', 'user_unique_id', 'user_unique_id_type'].indexOf(key) > -1) {
+          } else if (['user_id', 'web_id', 'user_unique_id', 'user_unique_id_type', 'anonymous_id'].indexOf(key) > -1) {
             this.envInfo.user[key] = info[key] ? String(info[key]) : info[key]
           } else if (['user_is_auth', 'user_is_login'].indexOf(key) > -1) {
             this.envInfo.user[key] = Boolean(info[key])

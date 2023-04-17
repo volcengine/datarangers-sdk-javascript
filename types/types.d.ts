@@ -46,19 +46,24 @@ export interface IInitParam {
   cookie_expire?: number;
   enable_custom_webid?: boolean;
   disable_track_event?: boolean;
-  visual_container_id?: boolean;
-  visual_domain?: string;
-  exposure_limit?: number;
-  ab_batch_time?: number;
   allow_hash?: boolean;
   enable_native?: boolean;
+  ab_cross?: boolean;
+  ab_cookie_domain?: string;
+  disable_ab_reset?: boolean;
+  enable_encryption?: boolean;
+  enable_anonymousid?: boolean
+  enable_debug?: boolean
+  crypto_publicKey?: string
+  encryption_type?: string
+  encryption_header?: string
 }
 
 export interface IConfigParam {
   _staging_flag?: 0 | 1;
   user_unique_id?: string;
-  web_id?: string;
   disable_auto_pv?: boolean;
+  web_id?: string;
   user_type?: number;
   os_name?: string;
   os_version?: string;
@@ -172,7 +177,6 @@ export declare enum SdkHook {
   AbCloseLayer = 'ab-close-layer',
   AbReady = 'ab-ready',
   AbComplete = 'ab-complete',
-  AbTimeout = 'ab-timeout',
 
   Profile = 'profile',
   ProfileSet = 'profile-set',
@@ -189,7 +193,11 @@ export declare enum SdkHook {
   TrackDurationResume = 'tracl-duration-resume',
 
   Autotrack = 'autotrack',
-  AutotrackReady = 'autotrack-ready'
+  AutotrackReady = 'autotrack-ready',
+
+  CepReady = 'cep-ready',
+
+  TracerReady = 'tracer-ready'
 }
 interface SdkConstructor {
   new(name: string): Sdk;
@@ -206,8 +214,8 @@ interface Sdk {
 
   init(options: IInitParam): void;
   config(configs?: IConfigParam): void;
-  setDomain(domain: string): void;
   getConfig(key?: string): Record<string, any>;
+  setDomain(domain: string): void;
   start(): void;
   send(): void;
   set(type: string): void;
@@ -217,7 +225,7 @@ interface Sdk {
     events:
       | Array<[string, EventParams] | [string, EventParams, number]>
   ): void;
-  filterEvent(filter: any): void;
+
   predefinePageView(params: any): void;
   clearEventCache(): void;
   setWebIDviaUnionID(unionId: string): void;
@@ -225,7 +233,6 @@ interface Sdk {
   getToken(callback: (info: Record<string, string | number>) => void, timeout?: number): void;
 
   resetStayDuration(url_path?: string, title?: string, url?: string): void;
-
   resetStayParams(url_path?: string, title?: string, url?: string): void;
 
   profileSet(profile: any): void;
@@ -234,6 +241,11 @@ interface Sdk {
   profileUnset(key: string): void;
   profileAppend(profile: any): void;
 
+  startTrackEvent(eventName: string): void;
+  endTrackEvent(eventName: string, params: any): void;
+  pauseTrackEvent(eventName: string): void;
+  resumeTrackEvent(eventName: string): void;
+
   setExternalAbVersion(vids: string): void;
   getVar(name: string, defaultValue: any, callback: (value: any) => void): void;
   getAllVars(callback: (value: any) => void): void;
@@ -241,9 +253,12 @@ interface Sdk {
   onAbSdkVersionChange(callback: (vids: string) => void): () => void;
   offAbSdkVersionChange(callback: (vids: string) => void): void;
   setExternalAbVersion(vids: string | null): void;
-  getABConfig(params: Record<string, any>, callback: (value: any) => void): void;
+  getABconfig(params: Record<string, any>, callback: (value: any) => void): void;
   openOverlayer(): void;
   closeOverlayer(): void;
+  autoInitializationRangers(
+    config: IInitParam & { onTokenReady: (webId: string) => void },
+  ): void;
 }
 declare const Sdk: Sdk;
 export const Collector: SdkConstructor;

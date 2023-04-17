@@ -13,6 +13,7 @@ enum Types {
   ConfigWebId = 'config-webid',
   ConfigDomain = 'config-domain',
   CustomWebId = 'custom-webid',
+  AnonymousId = 'anonymous-id',
   TokenChange = 'token-change',
   TokenReset = 'token-reset',
   ConfigTransform = 'config-transform',
@@ -28,7 +29,6 @@ enum Types {
   SubmitScuess = 'submit-scuess',
   SubmitAfter = 'submit-after',
   SubmitError = 'submit-error',
-  SubmitVerify = 'submit-verify',
   SubmitVerifyH = 'submit-verify-h5',
 
   Stay = 'stay',
@@ -67,7 +67,11 @@ enum Types {
   TrackDurationResume = 'tracl-duration-resume',
 
   Autotrack = 'autotrack',
-  AutotrackReady = 'autotrack-ready'
+  AutotrackReady = 'autotrack-ready',
+
+  CepReady = 'cep-ready',
+
+  TracerReady = 'tracer-ready'
 }
 
 export enum DebuggerMesssge {

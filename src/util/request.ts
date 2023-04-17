@@ -11,17 +11,17 @@ const ERROR = {
   RESPONSE: 5001,
   TIMEOUT: 5005,
 }
-var isSupportBeacon = function () {
+const isSupportBeacon = function () {
   if (window.navigator && window.navigator.sendBeacon) {
     return true
   } else {
     return false
   }
 }
-var NOOP = () => { }
-var encodePayload = (obj: any) => {
-  var string = ''
-  for (var key in obj) {
+const NOOP = () => { }
+const encodePayload = (obj: any) => {
+  let string = ''
+  for (const key in obj) {
     if (obj.hasOwnProperty(key) && (typeof obj[key] !== 'undefined')) {
       string += `&${key}=${encodeURIComponent(JSON.stringify(obj[key]))}`
     }
@@ -30,23 +30,23 @@ var encodePayload = (obj: any) => {
   return string
 };
 
-var sendByImg = (url: string, data: any, success?: any, fail?: any) => {
+const sendByImg = (url: string, data: any, success?: any, fail?: any) => {
   try {
-    var splitStringMatch = url.match(/\/v\d\//)
-    var splitString = ''
+    const splitStringMatch = url.match(/\/v\d\//)
+    let splitString = ''
     if (splitStringMatch) {
       splitString = splitStringMatch[0]
     } else {
       splitString = url.indexOf('/v1/') !== -1 ? '/v1/' : '/v2/'
     }
-    var urlPrefix = url.split(splitString)[0]
+    const urlPrefix = url.split(splitString)[0]
     if (!urlPrefix) {
       fail(url, data, ERROR.NO_URL)
       return
     }
     data.forEach((item) => {
-      var str = encodePayload(item);
-      var img = new Image(1, 1)
+      const str = encodePayload(item);
+      let img = new Image(1, 1)
       img.onload = () => {
         img = null
         success && success()
@@ -61,10 +61,10 @@ var sendByImg = (url: string, data: any, success?: any, fail?: any) => {
     fail && fail(url, data, ERROR.IMG_CATCH, e.message)
   }
 }
-var request = (url: string, data: any, timeout?: number, withCredentials?: boolean, success?: any, fail?: any, sendBecon?: boolean, encryption?: boolean) => {
-  var UA = window.navigator.userAgent
-  var browserName = window.navigator.appName
-  var isIE89 = browserName.indexOf('Microsoft Internet Explorer') !== -1 &&
+const request = (url: string, data: any, timeout?: number, withCredentials?: boolean, success?: any, fail?: any, sendBecon?: boolean, encryption?: boolean, encryption_header?: string) => {
+  const UA = window.navigator.userAgent
+  const browserName = window.navigator.appName
+  const isIE89 = browserName.indexOf('Microsoft Internet Explorer') !== -1 &&
     (UA.indexOf('MSIE 8.0') !== -1 || UA.indexOf('MSIE 9.0') !== -1)
   if (isIE89) {
     sendByImg(url, data, success, fail)
@@ -72,7 +72,7 @@ var request = (url: string, data: any, timeout?: number, withCredentials?: boole
     if (sendBecon) {
       if (isSupportBeacon()) {
         NOOP()
-        var status = window.navigator.sendBeacon(url, JSON.stringify(data))
+        const status = window.navigator.sendBeacon(url, JSON.stringify(data))
         if (status) {
           success()
         } else {
@@ -84,7 +84,7 @@ var request = (url: string, data: any, timeout?: number, withCredentials?: boole
       return
     }
   }
-  fetch(url, data, timeout, withCredentials, success, fail, '', '', encryption)
+  fetch(url, data, timeout, withCredentials, success, fail, '', '', encryption, encryption_header)
 }
 
 export default request

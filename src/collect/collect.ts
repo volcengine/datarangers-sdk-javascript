@@ -3,7 +3,7 @@
 import { IInitParam, IConfigParam } from '../../types/types'
 import Hook from '../util/hook';
 import { THook, THookInfo } from '../util/hook';
-import { isObject, isNumber, isString, getIndex, hashCode } from '../util/tool';
+import { isObject, isNumber, isString, getIndex, hashCode, hexToArray, encodeBase64 } from '../util/tool';
 import ConfigManager from './config'
 import Logger from '../util/log'
 import Types, { DebuggerMesssge } from './hooktype';
@@ -14,7 +14,8 @@ import Session from './session';
 import { SDK_VERSION } from './constant'
 import Storage from '../util/storage'
 import fetch from '../util/fetch'
-// import Debugger from '../plugin/debug/debug';
+import Debugger from '../plugin/debug/debug';
+import { Encrypt } from '../util/sm2crypto'
 
 
 type TEvent = any;
@@ -57,6 +58,10 @@ export default class Collector {
   adapters: Record<string, any> = {}
   sdkReady: boolean = false
   debugger: any
+  eventEncrypt: any
+  env: string
+  dynamicParamsFilter: Function
+  publicKey: string
   constructor(name: string) {
     this.name = name
     this.hook = new Hook()
@@ -106,18 +111,21 @@ export default class Collector {
       console.warn('channel must be `cn`, `sg`,`va` !!!')
       initConfig.channel = 'cn'
     }
-    this.inited = true
     this.logger = new Logger(this.name, initConfig.log)
     this.configManager = new ConfigManager(this, initConfig)
     this.appBridge = new AppBridge(initConfig, this.configManager)
     this.bridgeReport = this.appBridge.bridgeInject()
-    // this.debugger = new Debugger(this, initConfig)
+    this.debugger = new Debugger(this, initConfig)
     this.initConfig = initConfig
+    this.env = initConfig.channel_domain ? 'self' : 'public';
     this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 执行INIT', data: initConfig, level: 'info', time: Date.now() })
     if (initConfig.disable_auto_pv) {
       this.disableAutoPageView = true;
     }
     if (!this.bridgeReport) {
+      if (initConfig.enable_encryption && initConfig.encryption_type === 'sm') {
+        this.initCrypto()
+      }
       this.configManager.set({ app_id: initConfig.app_id })
       this.eventManager = new Event()
       this.tokenManager = new Token()
@@ -158,8 +166,8 @@ export default class Collector {
           this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
         }
         this.pageView();
-        this.on(Types.TokenChange, (tokenType: string) => {
-          if (tokenType === 'webid') {
+        this.on(Types.TokenChange, (tokenInfo: { type: string, id: string }) => {
+          if (tokenInfo.type === 'webid' || tokenInfo.type === 'anonymous_id') {
             this.pageView();
           }
           this.logger.info(`appid: ${initConfig.app_id} token change, new userInfo:${JSON.stringify(this.configManager.get('user'))}`)
@@ -178,6 +186,7 @@ export default class Collector {
       this.tokenManager.apply(this, initConfig)
       this.eventManager.apply(this, initConfig)
       this.sessionManager.apply(this, initConfig)
+      this.inited = true
       this.emit(Types.Init)
     }
   }
@@ -249,10 +258,14 @@ export default class Collector {
       const events = [];
       if (Array.isArray(event)) {
         event.forEach((each) => {
-          events.push(this.processEvent(each[0], each[1] || {}))
+          const process = this.processEvent(each[0], each[1] || {})
+          if (!process) return
+          events.push(process)
         })
       } else {
-        events.push(this.processEvent(event, params))
+        const process = this.processEvent(event, params)
+        if (!process) return
+        events.push(process)
       }
       if (this.bridgeReport) {
         events.forEach(item => {
@@ -277,7 +290,9 @@ export default class Collector {
       return;
     }
     const events = [];
-    events.push(this.processEvent(event, params || {}))
+    const process = this.processEvent(event, params || {})
+    if (!process) return
+    events.push(process)
     if (events.length) {
       this.emit(Types.BeconEvent, events)
       this.emit(Types.SessionResetTime)
@@ -285,6 +300,10 @@ export default class Collector {
   }
   processEvent(_event: string, params: any = {}) {
     try {
+      if (!_event) {
+        this.logger.warn('eventName is null， please check')
+        return null
+      }
       const EVT_REG = /^event\./
       let event = _event
       if (EVT_REG.test(_event)) {
@@ -318,7 +337,9 @@ export default class Collector {
       return { event: _event, params }
     }
   }
-
+  dynamicParams(dynamic: Function) {
+    this.dynamicParamsFilter = dynamic;
+  }
   filterEvent(filter: any) {
     this.eventFilter = filter
   }
@@ -346,13 +367,17 @@ export default class Collector {
     this.predefinePageView();
   }
   predefinePageView(params: any = {}) {
+    if (!this.inited) {
+      console.warn('predefinePageView should call after init');
+      return;
+    }
     const defaultPvParams = {
       title: document.title || location.pathname,
       url: location.href,
       url_path: location.pathname,
       time: Date.now(),
       referrer: window.document.referrer,
-      $is_first_time: `${this.configManager.is_first_time}`
+      $is_first_time: `${this.configManager && this.configManager.is_first_time || false}`
     }
     const mergedParams = {
       ...defaultPvParams,
@@ -386,12 +411,20 @@ export default class Collector {
     });
     this.emit(Types.CustomWebId)
   }
-
+  setAnonymousId(anonymousId: string) {
+    this.emit(Types.AnonymousId, anonymousId)
+  }
   setNativeAppId(appId: number) {
     if (!this.bridgeReport) return
     this.appBridge.setNativeAppId(appId)
   }
 
+  /**自定义加密接口 */
+  // setEncryptEvent(encrypt: any) {
+  //   this.eventEncrypt = encrypt;
+  // }
+  // setEncryptHeader(headerType: string) {
+  // }
   /** stay相关api */
   resetStayDuration(url_path: string = '', title: string = '', url: string = '') {
     this.emit(Types.ResetStay, { url_path, title, url }, Types.Stay)
@@ -399,7 +432,12 @@ export default class Collector {
   resetStayParams(url_path: string = '', title: string = '', url: string = '') {
     this.emit(Types.SetStay, { url_path, title, url }, Types.Stay)
   }
+
   getToken(callback: any, timeout?: number) {
+    if (!this.inited) {
+      this.logger.warn('getToken must be use after function init')
+      return;
+    }
     let tokenReturn = false
     const callbackUser = (tobid?: string) => {
       if (tokenReturn) return
@@ -551,8 +589,29 @@ export default class Collector {
   closeOverlayer() {
     this.emit(Types.AbCloseLayer, '', Types.Ab)
   }
+  // 初始化加密
+  initCrypto() {
+    this.publicKey = this.initConfig.crypto_publicKey || '04BA9E229380DC0E41E10839B0C52A4763D3EDFE8903F3B8E81395523381E03AA995D295BD4A4088792E4785B224F7837EB4D2C7C05973C7AE8687A35ACAE470A0';
+  }
+  // 加密数据
+  cryptoData(data: any) {
+    try {
+      if (!this.initConfig.enable_encryption) return data;
+      let encryptData
+      if (this.initConfig.encryption_type === 'sm') {
+        const encry = Encrypt(JSON.stringify(data), this.publicKey, 1)
+        const hexArray = hexToArray(encry)
+        encryptData = new Uint8Array(hexArray)
+      } else {
+        encryptData = `data=${encodeBase64(JSON.stringify(data))}`
+      }
+      return encryptData
+    } catch (e) {
+      return data
+    }
+  }
   destoryInstace() {
-    if (this.destroyInstance) return
+    if (this.destroyInstance) return;
     this.destroyInstance = true
     this.off(Types.TokenComplete)
   }

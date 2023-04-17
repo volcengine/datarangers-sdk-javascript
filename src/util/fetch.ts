@@ -9,12 +9,16 @@ const ERROR = {
   RESPONSE: 5001,
   TIMEOUT: 5005,
 }
-export default function fetch(url: string, data: any, timeout?: number, withCredentials?: boolean, success?: any, fail?: any, app_key?: string, method?: string, encryption?: boolean): void {
+export default function fetch(url: string, data: any, timeout?: number, withCredentials?: boolean, success?: any, fail?: any, app_key?: string, method?: string, encryption?: boolean, encryption_header?: string): void {
   try {
     var xhr = new XMLHttpRequest()
     var _method = method || 'POST'
     xhr.open(_method, `${url}`, true)
-    xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8')
+    if (encryption && encryption_header) {
+      xhr.setRequestHeader('Content-Type', `application/octet-stream;tt-data=${encryption_header}`)
+    } else {
+      xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8')
+    }
     if (app_key) {
       xhr.setRequestHeader('X-MCS-AppKey', `${app_key}`)
     }

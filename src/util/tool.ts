@@ -1,6 +1,7 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 
 // @ts-nocheck
+// @ts-nocheck
 export const isObject = (obj: any) =>
   obj != null && Object.prototype.toString.call(obj) == '[object Object]';
 
@@ -199,4 +200,62 @@ export const hashCode = (str: string): number => {
     h += 0x7ffffffffffff;
   }
   return h;
+}
+
+
+function leftPad(input, num) {
+  if (input.length >= num) return input
+
+  return (new Array(num - input.length + 1)).join('0') + input
+}
+
+export const hexToArray = (hexStr) => {
+  const words = []
+  let hexStrLength = hexStr.length
+
+  if (hexStrLength % 2 !== 0) {
+    hexStr = leftPad(hexStr, hexStrLength + 1)
+  }
+
+  hexStrLength = hexStr.length
+
+  for (let i = 0; i < hexStrLength; i += 2) {
+    words.push(parseInt(hexStr.substr(i, 2), 16))
+  }
+  return words
+}
+
+export const hexToBtyes = (hexStr) => {
+  for (var bytes = [], c = 0; c < hexStr.length; c += 2)
+    bytes.push(parseInt(hexStr.substr(c, 2), 16));
+  return bytes;
+}
+var base64EncodeChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+var base64encode = function (e) {
+  var r, a, c, h, o, t;
+  for (c = e.length, a = 0, r = ''; a < c;) {
+    if (h = 255 & e.charCodeAt(a++), a == c) {
+      r += base64EncodeChars.charAt(h >> 2),
+        r += base64EncodeChars.charAt((3 & h) << 4),
+        r += '==';
+      break
+    }
+    if (o = e.charCodeAt(a++), a == c) {
+      r += base64EncodeChars.charAt(h >> 2),
+        r += base64EncodeChars.charAt((3 & h) << 4 | (240 & o) >> 4),
+        r += base64EncodeChars.charAt((15 & o) << 2),
+        r += '=';
+      break
+    }
+    t = e.charCodeAt(a++),
+      r += base64EncodeChars.charAt(h >> 2),
+      r += base64EncodeChars.charAt((3 & h) << 4 | (240 & o) >> 4),
+      r += base64EncodeChars.charAt((15 & o) << 2 | (192 & t) >> 6),
+      r += base64EncodeChars.charAt(63 & t)
+  }
+  return r
+}
+export const hextobase = (str) => {
+  return base64encode(String.fromCharCode.apply(null, str.replace(/\r|\n/g, "").replace(/([\da-fA-F]{2}) ?/g, "0x$1 ").replace(/ +$/, "").split(" ")));
+
 }

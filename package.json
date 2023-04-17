@@ -1,6 +1,6 @@
 {
   "name": "@datarangers/sdk-javascript",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "scripts": {
     "nclean": "rimraf es lib core",
     "build": "export NODE_ENV=production && npm run nclean && npx rollup -c rollup.config.js",
@@ -11,7 +11,8 @@
   "types": "./types/types.d.ts",
   "license": "ISC",
   "dependencies": {
-    "js-cookie": "^3.0.1"
+    "js-cookie": "^3.0.1",
+    "sm-crypto": "^0.3.12"
   },
   "files": [
     "es",
