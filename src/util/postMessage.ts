@@ -47,7 +47,7 @@ export function receiveMsg(msgType: string, fn: TReceiveMsgCallback) {
 function processMsg(event: MessageEvent) {
 
   if (allowdOrigins.some(domain => domain === '*') ||
-    allowdOrigins.some(domain => event.origin.indexOf(domain) > -1)
+    allowdOrigins.some(domain => event.origin === domain)
   ) {
 
     let rawData: IDataReceive = event.data;
