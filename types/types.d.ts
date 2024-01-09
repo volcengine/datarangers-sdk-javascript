@@ -5,6 +5,7 @@ export interface IInitParam {
   app_key?: string;
   log?: boolean;
   disable_auto_pv?: boolean;
+  event_verify_url?: string;
 }
 
 export interface IConfigParam {

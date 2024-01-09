@@ -17,6 +17,7 @@ enum Types {
   Event = 'event',
   Events = 'events',
   BeconEvent = 'becon-event',
+  SubmitBefore = 'submit-before',
 
 }
 

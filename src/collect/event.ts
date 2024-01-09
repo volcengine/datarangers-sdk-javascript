@@ -168,6 +168,7 @@ export default class Event {
     events.forEach(originItem => {
       try {
         if (!originItem.length) return;
+        this.collect.emit(Types.SubmitBefore, originItem);
         request(this.reportUrl, originItem, this.timeout, false,
           (res, data) => {
           },

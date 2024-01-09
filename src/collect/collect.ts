@@ -20,6 +20,16 @@ export type ProfileParams = {
   [key: string]: string | number | boolean | Array<any>;
 };
 
+
+export interface IPlugin {
+  new();
+  apply: (collect: Collector, options: IInitParam) => void
+}
+type Plugin = {
+  name?: string;
+  plugin: IPlugin;
+  options?: any
+}
 export default class Collector {
   name: string
   hook: any
@@ -36,12 +46,34 @@ export default class Collector {
   started: boolean = false
   adapters: Record<string, any> = {}
   sdkReady: boolean = false
+  static plugins: Array<Plugin> = []
+  pluginInstances: Array<IPlugin> = []
   constructor(name: string) {
     this.name = name
     this.hook = new Hook()
     this.Types = Types
     this.adapters['fetch'] = fetch
     this.adapters['storage'] = Storage
+  }
+  static usePlugin(plugin: IPlugin, name?: string, options?: any) {
+    // 本地加载
+    if (name) {
+      let check = false
+      for (let i = 0, len = Collector.plugins.length; i < len; i++) {
+        const p = Collector.plugins[i]
+        if (p.name === name) {
+          Collector.plugins[i].plugin = plugin;
+          Collector.plugins[i].options = options || {};
+          check = true
+          break
+        }
+      }
+      if (!check) {
+        Collector.plugins.push({ name, plugin, options })
+      }
+    } else {
+      Collector.plugins.push({ plugin })
+    }
   }
   init(initConfig: IInitParam) {
     if (this.inited) {
@@ -86,6 +118,18 @@ export default class Collector {
         });
       }),
     ]).then(() => {
+      try {
+        Collector.plugins.reduce((result, plugin) => {
+          const { plugin: P, options } = plugin
+          const cloneOptions = Object.assign(this.initConfig, options)
+          const instance = new P()
+          instance.apply(this, cloneOptions)
+          result.push(instance)
+          return result
+        }, this.pluginInstances)
+      } catch (e) {
+        console.warn(`load plugin error, ${e.message}`)
+      }
       this.sdkReady = true;
       this.emit(Types.Ready);
       console.info(`appid: ${initConfig.app_id}, userInfo:${JSON.stringify(this.configManager.get('user'))}`);
