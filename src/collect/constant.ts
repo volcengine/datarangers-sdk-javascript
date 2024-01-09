@@ -7,7 +7,7 @@ export const LOG_URL = {
   sg: '1fz22z22z1nz21z4mz4bz4bz1kz1az21z4az22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
 }
 
-export const SDK_VERSION = '0.0.4-lite'
+export const SDK_VERSION = '0.0.5-lite'
 
 
 
