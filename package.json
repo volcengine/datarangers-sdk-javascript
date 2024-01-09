@@ -1,6 +1,6 @@
 {
   "name": "@datarangers/sdk-javascript",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "scripts": {
     "nclean": "rimraf es lib core",
     "build": "export NODE_ENV=production && npm run nclean && npx rollup -c rollup.config.js",
