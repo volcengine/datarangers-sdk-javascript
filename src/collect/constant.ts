@@ -18,7 +18,7 @@ LOG = {
 
 export const LOG_URL = LOG
 
-export const SDK_VERSION = '0.0.6'
+export const SDK_VERSION = '0.0.7'
 
 let SDK_USE_TYPE = 'npm'
 

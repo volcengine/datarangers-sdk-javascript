@@ -188,6 +188,9 @@ export default class Collector {
       this.sessionManager.apply(this, initConfig)
       this.inited = true
       this.emit(Types.Init)
+    } else {
+      this.inited = true
+      this.emit(Types.Init)
     }
   }
   config(configs: IConfigParam) {
