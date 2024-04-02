@@ -272,5 +272,44 @@ export default class Collector {
     }
     this.event('predefine_pageview', mergedParams)
   }
+  setExternalAbVersion(vids: string) {
+    this.emit(
+      Types.AbExternalVersion,
+      typeof vids === 'string' && vids ? `${vids}`.trim() : null,
+      Types.Ab
+    )
+  }
+
+  getVar(name, defaultValue, callback) {
+    this.emit(Types.AbVar, { name, defaultValue, callback }, Types.Ab)
+  }
+
+  getABconfig(params: any, callback: any) {
+    this.emit(Types.AbConfig, { params, callback }, Types.Ab)
+  }
+  getAbSdkVersion() {
+    return this.configManager.getAbVersion()
+  }
+  onAbSdkVersionChange(linster: any) {
+    this.emit(Types.AbVersionChangeOn, linster, Types.Ab)
+    return () => {
+      this.emit(Types.AbVersionChangeOff, linster, Types.Ab)
+    }
+  }
+  offAbSdkVersionChange(linster?: any) {
+    this.emit(Types.AbVersionChangeOff, linster, Types.Ab)
+  }
+  openOverlayer() {
+    this.emit(Types.AbOpenLayer, '', Types.Ab)
+  }
+
+  closeOverlayer() {
+    this.emit(Types.AbCloseLayer, '', Types.Ab)
+  }
+
+  getAllVars(callback) {
+    this.emit(Types.AbAllVars, callback, Types.Ab)
+  }
 }
+
 
