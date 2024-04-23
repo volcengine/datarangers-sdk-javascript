@@ -27,6 +27,8 @@ export default class ConfigManager {
   configKey: string
   domain: string
   is_first_time: boolean = true
+  ab_version: any
+  ab_cache: any
   constructor(collect: any, initConfig: any) {
     this.initConfig = initConfig
     this.collect = collect
@@ -114,10 +116,12 @@ export default class ConfigManager {
         wechat_openid: undef,
       },
     }
+    this.ab_version = '';
     this.evtParams = {};
     // 事件处理函数
     this.reportErrorCallback = () => { }
     this.initDomain();
+    this.initABData();
   }
   initDomain() {
     const channelDomain = this.initConfig['channel_domain'];
@@ -133,6 +137,27 @@ export default class ConfigManager {
   }
   getDomain() {
     return this.domain;
+  }
+  initABData() {
+    const abKey = `__tea_sdk_ab_version_${this.initConfig.app_id}`;
+    let abCache = this.localStorage.getItem(abKey);
+    this.setAbCache(abCache);
+  }
+  setAbCache(data: any) {
+    this.ab_cache = data;
+  }
+  getAbCache() {
+    return this.ab_cache;
+  }
+  setAbVersion(vid: string) {
+    this.ab_version = vid
+  }
+  getAbVersion() {
+    return this.ab_version
+  }
+  clearAbCache() {
+    this.ab_version = '';
+    this.ab_cache = {};
   }
   getUrl(type: string) {
     let report = ''
