@@ -126,7 +126,7 @@ export default class Event {
     const { header, user } = this.configManager.get()
     header.custom = JSON.stringify(header.custom)
     const evtParams = this.configManager.get('evtParams')
-    const mergeEvents = events.map(item => {
+    const mergeEvents = events.filter(item => {
       try {
         if (Object.keys(evtParams).length) {
           item.params = { ...evtParams, ...item.params }
@@ -135,7 +135,7 @@ export default class Event {
         item.params = JSON.stringify(item.params)
         return item;
       } catch (e) {
-        return item;
+        return false;
       }
     })
     let mergeData = []
@@ -170,8 +170,7 @@ export default class Event {
         if (!originItem.length) return;
         this.collect.emit(Types.SubmitBefore, originItem);
         request(this.reportUrl, originItem, this.timeout, false,
-          (res, data) => {
-          },
+          (res, data) => { },
           (eventData, errorCode) => {
             this.configManager.get('reportErrorCallback')(eventData, errorCode)
 

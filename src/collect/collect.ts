@@ -272,6 +272,7 @@ export default class Collector {
     }
     this.event('predefine_pageview', mergedParams)
   }
+
   setExternalAbVersion(vids: string) {
     this.emit(
       Types.AbExternalVersion,

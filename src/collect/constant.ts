@@ -7,6 +7,12 @@ export const LOG_URL = {
   sg: '1fz22z22z1nz21z4mz4bz4bz1kz1az21z4az22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
 }
 
+export const AB_DOMAINS = {
+  cn: '1fz22z22z1nz21z4mz4bz4bz22z1mz19z1jz1mz1ez4az1az22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
+  va: '1fz22z22z1nz21z4mz4bz4bz22z1mz19z1jz1mz1ez4az1gz22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
+  sg: '1fz22z22z1nz21z4mz4bz4bz22z1mz19z1jz1mz1ez4az22z1mz19z21z1lz21z21z1bz1iz4az1az1mz1k',
+}
+
 export const SDK_VERSION = '0.0.5-lite'
 
 
