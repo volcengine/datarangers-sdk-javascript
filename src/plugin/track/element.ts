@@ -1,6 +1,6 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 
-import { getText, getContainer, getTextSingle, isAttrFilter, getAttributes } from './dom'
+import { getText, getContainer, getTextSingle, isAttrFilter, getAttributes, getElementText } from './dom'
 import { getXpath, getPositionData, getEventData } from './path'
 import { IGNORE } from './event'
 interface ElementData {
@@ -40,7 +40,7 @@ export default function getElementData(event: any, element: HTMLElement, options
   const since_page_start_ms = Date.now() - page_start_ms
   const _position = positions.map(item => `${item}`)
   let elementObj = null
-  if (window.TEAVisualEditor.getOriginXpath) {
+  if (window.TEAVisualEditor && window.TEAVisualEditor.getOriginXpath) {
     elementObj = window.TEAVisualEditor.getOriginXpath({
       xpath: element_path,
       positions: _position
@@ -50,7 +50,7 @@ export default function getElementData(event: any, element: HTMLElement, options
   elementData.positions = elementObj && elementObj.positions || _position
   if (ignore && !ignore.text) {
     elementData.texts = texts
-    elementData.element_title = getTextSingle(element)
+    elementData.element_title = getElementText(element)
   }
   elementData.element_id = element.getAttribute('id') || ''
   elementData.element_class_name = element.getAttribute('class') || ''
@@ -79,9 +79,10 @@ export default function getElementData(event: any, element: HTMLElement, options
     elementData.href = containerNoode.getAttribute('href')
   }
 
-  if (element.tagName === 'IMG') {
-    elementData.src = element.getAttribute('src')
+  if (options.src !== false) {
+    if (element.tagName === 'IMG' && !element.getAttribute('src').includes('base64')) {
+      elementData.src = element.getAttribute('src')
+    }
   }
-
   return elementData
 }

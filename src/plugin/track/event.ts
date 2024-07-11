@@ -53,7 +53,8 @@ export default class EventHandle {
       page: 'bav2b_page',
       beat: 'bav2b_beat',
       static: 'bav2b_page_statistics',
-      exposure: 'bav2b_exposure'
+      exposure: 'bav2b_exposure',
+      scroll: '$bav2b_slide'
     }
     if (options && options.text === false) {
       this.ignore.text = true
@@ -145,6 +146,34 @@ export default class EventHandle {
       data.page_start_ms = window.performance.timing.navigationStart
     } catch (e) {
       console.log(`beat event error ${JSON.stringify(e)}`)
+    }
+    return data
+  }
+  handleExposureEvent(eventInfo: any, e: any) {
+    if (ignore(e.target)) {
+      return null
+    }
+    let data = getEventData(eventInfo.event || this.eventName['exposure'], e, e.target || e, this.options, this.ignore);
+    data.$exposure_type = eventInfo.exposureType;
+    if (this.options.exposure.callback) {
+      const callData = this.options.exposure.callback(data)
+      if (!callData && !Object.keys(callData).length) {
+        console.warn('exposure callback must return data!')
+        return data
+      }
+      return callData
+    }
+    return data
+  }
+  handleScrollEvent(eventInfo: any, e: any) {
+    let data = getEventData(eventInfo.event || this.eventName['scroll'], e, e.target || e, this.options, this.ignore);
+    data = Object.assign(data, eventInfo.params);
+    if (this.options.scroll.callback) {
+      data = this.options.scroll.callback(data)
+      if (!data && !Object.keys(data).length) {
+        console.warn('scroll callback must return data!')
+        return
+      }
     }
     return data
   }

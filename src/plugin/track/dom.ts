@@ -87,6 +87,21 @@ export function getTextSingle(element: HTMLElement): string {
   })(ele)
   return text
 }
+export const getElementText = (element: any) => {
+  if (!element) return ''
+  let elementText = '';
+  if (element.textContent) {
+    elementText = element.textContent.trim()
+  } else if (element.innerText) {
+    elementText = element.innerText.trim()
+  }
+  if (element.tagName === 'input' || element.tagName === 'INPUT') {
+    elementText = element.value || ''
+  }
+  return elementText
+}
+
+
 
 export function ignore(element: any): boolean {
   let _element = element
@@ -126,7 +141,7 @@ export const getAttributes = (ele: HTMLElement, attrs: any) => {
   const result = {}
   if (typeof attrs === 'string') {
     if (hasAttribute(ele, attrs)) {
-      result['attrs'] = ele.getAttribute(attrs)
+      result[attrs] = ele.getAttribute(attrs)
     }
   } else {
     if (isArray(attrs)) {

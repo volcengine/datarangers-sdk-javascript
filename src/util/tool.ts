@@ -13,6 +13,9 @@ export const isString = (obj: any) => typeof obj == 'string';
 
 export const isArray = (obj: any) => Array.isArray(obj);
 
+export const isBoolean = (obj: any) => typeof obj == 'boolean';
+
+
 export const getIndex = (() => {
   var lastEventId = +Date.now() + Number(`${Math.random()}`.slice(2, 8))
   return () => {
@@ -258,4 +261,22 @@ var base64encode = function (e) {
 export const hextobase = (str) => {
   return base64encode(String.fromCharCode.apply(null, str.replace(/\r|\n/g, "").replace(/([\da-fA-F]{2}) ?/g, "0x$1 ").replace(/ +$/, "").split(" ")));
 
+}
+
+export const addListener = (target, type, handler, pop) => {
+  if (target.addEventListener) {
+    target.addEventListener(type, handler, pop)
+  } else if (target.attachEven) {
+    target.attachEven(`on${type}`, handler)
+  } else {
+    target[`on${type}`] = handler
+  }
+}
+
+export const removeListener = (target, type, handler, pop) => {
+  if (target.addEventListener) {
+    target.removeEventListener(type, handler, pop)
+  } else if (target.attachEven) {
+    target.detachEven(`on${type}`, handler)
+  }
 }

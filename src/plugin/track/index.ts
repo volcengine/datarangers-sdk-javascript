@@ -7,6 +7,8 @@ import Request from './request'
 import { OptionsType, EventInfo } from './type'
 import readyToLoadEditor from './load'
 import Exposure from './exposure'
+// import ScrollSlide from './scroll/scroll'
+import { isBoolean } from '../../util/tool'
 
 const defaultOpt = {
   hashTag: false,
@@ -18,6 +20,7 @@ export default class AutoTrack {
   EventHandle: EventHandle
   Request: Request
   Exposure: Exposure
+  // Scroll: ScrollSlide
   Config: Config
   options: OptionsType
   destroyed: boolean
@@ -29,10 +32,10 @@ export default class AutoTrack {
     this.collect = collect
     this.config = config
     if (!config.autotrack) return
-    const { Types } = collect
     if (config.autotrack && config.autotrack.collect_url) {
       if (!config.autotrack.collect_url()) return;
     }
+    const { Types } = collect
     this.ready(Types.Autotrack)
     this.collect.emit(Types.AutotrackReady)
   }
@@ -44,7 +47,8 @@ export default class AutoTrack {
     this.destroyed = false
     this.options = options
     this.Config = new Config(defaultConfig, this.options)
-    this.Exposure = new Exposure(this.config, this.handle.bind(this))
+    this.Exposure = new Exposure(this.collect, this.config, this.handle.bind(this))
+    // this.Scroll = new ScrollSlide(this.config, this.handle.bind(this))
     this.Listener = new Listener(options, this.collect, this.Config)
     this.EventHandle = new EventHandle(this.config, options)
     this.Request = new Request(this.collect)
@@ -55,18 +59,23 @@ export default class AutoTrack {
   init() {
     this.Listener.init(this.handle.bind(this))
   }
-  handle(_eventInfo: EventInfo, _data?: any) {
-    const { eventType } = _eventInfo
-    if (eventType === 'dom') {
-      this.handleDom(_eventInfo, _data)
+  handle(eventInfo: EventInfo, data?: any) {
+    try {
+      if (this.config.autotrack.collect_url) {
+        if (!this.config.autotrack.collect_url()) return;
+      }
+    } catch (e) { }
+    if (this.collect.sdkStop) return;
+    if (eventInfo.eventType === 'dom') {
+      this.handleDom(eventInfo, data)
     }
   }
   handleDom(eventInfo: EventInfo, data: any) {
     try {
       const { eventName } = eventInfo
-      if (eventName === 'click' || eventName === 'exposure' || eventName === 'change' || eventName === 'submit') {
+      if (eventName === 'click' || eventName === 'change' || eventName === 'submit') {
         const handleResult = this.EventHandle.handleEvent(data, eventName)
-        handleResult !== null && this.Request.send({ eventType: 'custom', eventName: `report_${eventName}_event`, extra: { methods: 'GET' } }, handleResult)
+        handleResult && this.Request.send({ eventType: 'custom' }, handleResult)
       } else if (eventName === 'page_view' || eventName === 'page_statistics') {
         let pageData
         if (eventName === 'page_view') {
@@ -74,11 +83,17 @@ export default class AutoTrack {
         } else {
           pageData = this.EventHandle.handleStatisticsEvent(data)
         }
-        this.Request.send({ eventType: 'custom', eventName: 'report_${eventName}_event', extra: { methods: 'GET' } }, pageData)
+        pageData && this.Request.send({ eventType: 'custom' }, pageData)
       } else if (eventName === 'beat') {
         const beatData = this.EventHandle.handleBeadtEvent(data)
         const { eventSend } = eventInfo
-        this.Request.send({ eventType: 'custom', eventName: 'report_${eventName}_event', extra: { methods: 'GET' }, eventSend }, beatData)
+        beatData && this.Request.send({ eventType: 'custom', eventSend }, beatData)
+      } else if (eventName === 'exposure') {
+        const handleResult = this.EventHandle.handleExposureEvent(eventInfo, data)
+        handleResult && this.Request.send({ eventType: 'custom' }, handleResult)
+      } else if (eventName === 'scroll') {
+        const handleResult = this.EventHandle.handleScrollEvent(eventInfo, data)
+        handleResult && this.Request.send({ eventType: 'custom' }, handleResult)
       }
     } catch (e) {
       console.log(`handel dom event error ${JSON.stringify(e)}`)

@@ -14,7 +14,7 @@ import Session from './session';
 import { SDK_VERSION } from './constant'
 import Storage from '../util/storage'
 import fetch from '../util/fetch'
-import Debugger from '../plugin/debug/debug';
+// import Debugger from '../plugin/debug/debug';
 import { Encrypt } from '../util/sm2crypto'
 
 
@@ -115,7 +115,7 @@ export default class Collector {
     this.configManager = new ConfigManager(this, initConfig)
     this.appBridge = new AppBridge(initConfig, this.configManager)
     this.bridgeReport = this.appBridge.bridgeInject()
-    this.debugger = new Debugger(this, initConfig)
+    // this.debugger = new Debugger(this, initConfig)
     this.initConfig = initConfig
     this.env = initConfig.channel_domain ? 'self' : 'public';
     this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 执行INIT', data: initConfig, level: 'info', time: Date.now() })

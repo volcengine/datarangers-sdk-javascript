@@ -6,14 +6,14 @@ import Intersection from "./intersection";
 class Exposure {
   _observer: any
   _intersection: any
-  constructor(config: any, eventHandle: any) {
+  constructor(collect: any, config: any, eventHandle: any) {
     if (!config.autotrack || !config.autotrack.exposure) return;
-    this._intersection = new Intersection(config, eventHandle);
-    this._observer = new Observer(this._intersection);
+    this._intersection = new Intersection(collect, config, eventHandle);
+    this._observer = new Observer(this._intersection, config);
     if (this._intersection && this._observer) {
       this.initObserver()
     } else {
-      console.log('your browser version cannot support exposure, please update~')
+      console.log('your browser version cannot support exposure event, please update~')
     }
   }
   initObserver() {

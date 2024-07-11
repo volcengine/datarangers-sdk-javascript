@@ -4,7 +4,7 @@ import { AB_DOMAINS } from '../../collect/constant'
 import '../../util/url-polyfill'
 import { DebuggerMesssge } from '../../collect/hooktype';
 import { getIframeUrl, isObject, parseUrlQuery, parseURL, decodeUrl } from '../../util/tool';
-import readyToLoadEditor, { loadVisual, loadMuiltlink } from './load';
+// import readyToLoadEditor, { loadVisual, loadMuiltlink } from './load';
 
 enum CallbackType {
   Var,
@@ -151,32 +151,32 @@ export default class Ab {
     }
   }
   loadMode() {
-    const name = getIframeUrl();
-    let editMode = '';
-    if (name) {
-      const { scenario, href } = name;
-      if (scenario) {
-        this.editMode = true;
-        editMode = scenario;
-      } else if (
-        href &&
-        (href.indexOf('datatester') !== -1 ||
-          href.indexOf('visual-editor') !== -1)
-      ) {
-        this.editMode = true;
-        editMode = 'visual-editor';
-      }
-    }
-    if (this.enable_ab_visual) {
-      readyToLoadEditor(this.collect, this.config);
-      if (editMode === 'visual-editor') {
-        this.collect.destoryInstace();
-        return;
-      }
-    }
-    if (this.enable_multilink) {
-      loadMuiltlink(this.collect, this.config);
-    }
+    // const name = getIframeUrl();
+    // let editMode = '';
+    // if (name) {
+    //   const { scenario, href } = name;
+    //   if (scenario) {
+    //     this.editMode = true;
+    //     editMode = scenario;
+    //   } else if (
+    //     href &&
+    //     (href.indexOf('datatester') !== -1 ||
+    //       href.indexOf('visual-editor') !== -1)
+    //   ) {
+    //     this.editMode = true;
+    //     editMode = 'visual-editor';
+    //   }
+    // }
+    // if (this.enable_ab_visual) {
+    //   readyToLoadEditor(this.collect, this.config);
+    //   if (editMode === 'visual-editor') {
+    //     this.collect.destoryInstace();
+    //     return;
+    //   }
+    // }
+    // if (this.enable_multilink) {
+    //   loadMuiltlink(this.collect, this.config);
+    // }
   }
   checkLocal() {
     const { ab_version, ab_ext_version, ab_version_multilink, data } = this.getABCache();
@@ -447,7 +447,7 @@ export default class Ab {
       if ($ab_modification && $ab_modification.val && this.enable_ab_visual) {
         if (this.collect.destroyInstance) return;
         this.getVar('$ab_modification', window.location.href, () => {
-          loadVisual($ab_modification.val);
+          // loadVisual($ab_modification.val);
           this.closeOverlayer();
         });
       } else if ($ab_url && this.enable_multilink) {
