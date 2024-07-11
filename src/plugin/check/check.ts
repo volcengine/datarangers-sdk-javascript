@@ -14,7 +14,8 @@ export default class EventCheck {
       '__bav_page_statistics',
       '__bav_click',
       '__bav_page_exposure',
-      '_be_active'
+      '_be_active',
+      '$bav2b_slide'
     ]
     this.paramsNameWhiteList = [
       '$inactive',
@@ -25,7 +26,11 @@ export default class EventCheck {
       '$source_id',
       '$is_first_time',
       '$user_unique_id_type',
-      '_staging_flag'
+      '_staging_flag',
+      '$exposure_type',
+      '$direction',
+      '$offsetY',
+      '$offsetX'
     ]
     this.regStr = new RegExp('^[a-zA-Z0-9][a-z0-9A-Z_.-]{1,255}$');
   }

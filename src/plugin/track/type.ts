@@ -8,8 +8,7 @@ export type OptionsType = {
 }
 export type EventInfo = {
   eventType: 'custom' | 'dom',
-  eventName: string,
-  extra?: Object,
+  eventName?: string,
   eventSend?: string
 }
 
@@ -42,4 +41,8 @@ export type ParamsStruct = {
   href?: string
   src?: string
   page_title?: string
+  $exposure_type?: number
+  $direction?: number
+  $offsetX?: number
+  $offsetY?: number
 }

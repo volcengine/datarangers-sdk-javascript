@@ -25,28 +25,17 @@ export type RequestHeaders = {
 class Request {
   logFunc: any
   logFuncBecon: any
-  eventNameList: string[]
   collect: any
   constructor(collect: any) {
     this.collect = collect
-    this.eventNameList = [
-      'report_click_event',
-      'report_change_event',
-      'report_submit_event',
-      'report_exposure_event',
-      'report_page_view_event',
-      'report_page_statistics_event',
-      'report_beat_event'
-    ]
   }
-  send(_eventInfo: EventInfo, _data: any) {
-    const { eventSend } = _eventInfo
-    const event = _data['event']
-    delete _data['event']
-    if (eventSend && eventSend === 'becon') {
-      this.collect.beconEvent(event, _data)
+  send(eventInfo: EventInfo, data: any) {
+    const event = data['event']
+    delete data['event']
+    if (eventInfo && eventInfo.eventSend === 'becon') {
+      this.collect.beconEvent(event, data)
     } else {
-      this.collect.event(event, _data)
+      this.collect.event(event, data)
     }
   }
 
