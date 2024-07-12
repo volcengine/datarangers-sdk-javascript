@@ -1,7 +1,7 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 import { openOverlayer, closeOverlayer } from './layer';
 import { AB_DOMAINS } from '../../collect/constant'
-import '../../util/url-polyfill'
+// import '../../util/url-polyfill'
 import { DebuggerMesssge } from '../../collect/hooktype';
 import { getIframeUrl, isObject, parseUrlQuery, parseURL, decodeUrl } from '../../util/tool';
 // import readyToLoadEditor, { loadVisual, loadMuiltlink } from './load';

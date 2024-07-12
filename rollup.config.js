@@ -29,7 +29,7 @@ const commonPlugins = [
   filesize(),
   progress(),
   cleanup(),
-  // terser(),
+  terser(),
 ];
 
 const replaceOptions = {

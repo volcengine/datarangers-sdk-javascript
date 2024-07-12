@@ -74,6 +74,22 @@ export default function getElementData(event: any, element: HTMLElement, options
       }
     }
   }
+  if (options.custom_attr) {
+    try {
+      if (isAttrFilter(element, options.custom_attr)) {
+        const attrData = getAttributes(element, options.custom_attr)
+        const attr = decodeURIComponent(attrData[options.custom_attr])
+        const attrObj = JSON.parse(attr)
+        if (Object.keys(attrObj)) {
+          for (let key in attrObj) {
+            elementData[key] = attrObj[key]
+          }
+        }
+      }
+    } catch (e) {
+      console.log('custom attr error')
+    }
+  }
   const containerNoode = getContainer(element)
   if (containerNoode.tagName === 'A') {
     elementData.href = containerNoode.getAttribute('href')

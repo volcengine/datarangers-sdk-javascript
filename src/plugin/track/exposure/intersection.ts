@@ -267,5 +267,60 @@ export default class Intersection {
     return this.exposureType
   }
   addListen() {
+    this.collect.on('set-exposure-type', (type) => {
+      this.customType = type
+    })
+    const change = this.visibilitychange.bind(this)
+    addListener(document, 'visibilitychange', change, false)
+    window.addEventListener("hashchange", (hash) => {
+      const current = this.hashMap.get(hash.oldURL)
+      if (current && location.href === current.prev) {
+        this.backStatus = true
+        this.exposureType = ExposureTypeE.RESUME_FORM_PAGE
+      } else {
+        this.backStatus = false
+        this.hashMap.set(location.href, {
+          current: hash.newURL,
+          prev: hash.oldURL
+        })
+      }
+    });
+    if (this.collect.bridgeReport) {
+      const oldPushState = window.history.pushState;
+      history.pushState = (state, ...args) => {
+        if (typeof history['onpushstate'] === 'function') {
+          history['onpushstate']({ state })
+        }
+        const ret = oldPushState.call(history, state, ...args)
+        this.lastState = state;
+        return ret
+      }
+      const oldReplaceState = history.replaceState
+      history.replaceState = (state, ...args) => {
+        if (typeof history['onreplacestate'] === 'function') {
+          history['onreplacestate']({ state })
+        }
+        const ret = oldReplaceState.call(history, state, ...args)
+        this.lastState = state;
+        return ret
+      }
+    } else {
+      this.collect.on('STATE_CHANGE', (state) => {
+        this.lastState = state;
+      })
+    }
+    window.addEventListener('popstate', (state) => {
+      const currentState = state.state;
+      if (currentState && currentState.current && this.lastState && this.lastState.back && currentState.current === this.lastState.back) {
+        // 用户点击了“退回”按钮
+        this.backStatus = true
+        this.exposureType = ExposureTypeE.RESUME_FORM_PAGE
+      } else {
+        this.backStatus = false
+      }
+    })
+    return () => {
+      removeListener(document, 'visibilitychange', change, false)
+    }
   }
 }
