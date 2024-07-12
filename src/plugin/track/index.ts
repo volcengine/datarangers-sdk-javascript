@@ -7,7 +7,7 @@ import Request from './request'
 import { OptionsType, EventInfo } from './type'
 import readyToLoadEditor from './load'
 import Exposure from './exposure'
-// import ScrollSlide from './scroll/scroll'
+import ScrollSlide from './scroll/scroll'
 import { isBoolean } from '../../util/tool'
 
 const defaultOpt = {
@@ -20,7 +20,7 @@ export default class AutoTrack {
   EventHandle: EventHandle
   Request: Request
   Exposure: Exposure
-  // Scroll: ScrollSlide
+  Scroll: ScrollSlide
   Config: Config
   options: OptionsType
   destroyed: boolean
@@ -48,13 +48,13 @@ export default class AutoTrack {
     this.options = options
     this.Config = new Config(defaultConfig, this.options)
     this.Exposure = new Exposure(this.collect, this.config, this.handle.bind(this))
-    // this.Scroll = new ScrollSlide(this.config, this.handle.bind(this))
+    this.Scroll = new ScrollSlide(this.config, this.handle.bind(this))
     this.Listener = new Listener(options, this.collect, this.Config)
     this.EventHandle = new EventHandle(this.config, options)
     this.Request = new Request(this.collect)
     this.autoTrackStart = true
     this.init()
-    readyToLoadEditor(this, this.config)
+    // readyToLoadEditor(this, this.config)
   }
   init() {
     this.Listener.init(this.handle.bind(this))
