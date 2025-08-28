@@ -13,7 +13,7 @@ import Token from './token'
 import Session from './session';
 import { SDK_VERSION } from './constant'
 import Storage from '../util/storage'
-import fetch from '../util/fetch'
+import RequestManager from '../plugin/request'
 // import Debugger from '../plugin/debug/debug';
 import { Encrypt } from '../util/sm2crypto'
 
@@ -62,13 +62,13 @@ export default class Collector {
   env: string
   dynamicParamsFilter: Function
   publicKey: string
+  requestManager: any
   constructor(name: string) {
     this.name = name
     this.hook = new Hook()
     this.logger = new Logger(name)
     this.remotePlugin = new Map()
     this.Types = Types
-    this.adapters['fetch'] = fetch
     this.adapters['storage'] = Storage
   }
   static usePlugin(plugin: IPlugin, name?: string, options?: any) {
@@ -116,6 +116,7 @@ export default class Collector {
     this.appBridge = new AppBridge(initConfig, this.configManager)
     this.bridgeReport = this.appBridge.bridgeInject()
     // this.debugger = new Debugger(this, initConfig)
+    this.requestManager = new RequestManager(this, initConfig)
     this.initConfig = initConfig
     this.env = initConfig.channel_domain ? 'self' : 'public';
     this.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 执行INIT', data: initConfig, level: 'info', time: Date.now() })
@@ -340,6 +341,7 @@ export default class Collector {
       return { event: _event, params }
     }
   }
+
   dynamicParams(dynamic: Function) {
     this.dynamicParamsFilter = dynamic;
   }
@@ -422,6 +424,14 @@ export default class Collector {
     this.appBridge.setNativeAppId(appId)
   }
 
+  enableTransPort() {
+    this.configManager.setEnableClientTransport(true);
+  }
+
+  disableTransPort() {
+    this.configManager.setEnableClientTransport(false);
+  }
+  
   /**自定义加密接口 */
   // setEncryptEvent(encrypt: any) {
   //   this.eventEncrypt = encrypt;
@@ -613,6 +623,13 @@ export default class Collector {
       return data
     }
   }
+
+  destoryInstance() {
+    if (this.destroyInstance) return;
+    this.destroyInstance = true;
+    this.off(Types.TokenComplete);
+  }
+
   destoryInstace() {
     if (this.destroyInstance) return;
     this.destroyInstance = true

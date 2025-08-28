@@ -2,6 +2,7 @@
 
 import { DebuggerMesssge } from '../../collect/hooktype'
 import EventCheck from '../check/check'
+import Types from '../../collect/hooktype'
 
 interface ProfileParams {
   [key: string]: string | number | Array<any>;
@@ -16,17 +17,13 @@ export default class Profile {
   cache: Record<string, any>
   duration: number
   reportUrl: string
-  fetch: any
   eventCheck: any
   apply(collect: any, config: any) {
     this.collect = collect
     this.config = config
     this.duration = 60 * 1000
     this.reportUrl = `${collect.configManager.getDomain()}/profile/list`
-    const { Types } = collect
-    const { fetch } = collect.adapters
     this.eventCheck = new EventCheck(collect, config)
-    this.fetch = fetch
     this.cache = {}
     this.collect.on(Types.ProfileSet, (params) => {
       this.setProfile(params);
@@ -70,7 +67,24 @@ export default class Profile {
       let data = this.collect.eventManager.merge(profileEvent, true)
       const encodeData = this.collect.cryptoData(data);
       const url = this.collect.configManager.getUrl('profile')
-      this.fetch(url, encodeData, 100000, false, () => { }, () => { }, '', 'POST', this.config.enable_encryption, this.config.encryption_header)
+      this.collect.requestManager.useRequest({
+        url: this.reportUrl,
+        data: encodeData,
+        timeout: 100000,
+        encryption: this.config.enable_encryption,
+        encryption_header: this.config.encryption_header,
+        zip: true,
+        success: (res, data, statusType, startTime, status) => {
+          if (res && res.e !== 0) {
+            this.collect.emit(Types.SubmitError, { type: 'f_data', eventData: data, errorCode: res.e, response: res, startTime, endTime: Date.now(), status });
+          } else {
+            this.collect.emit(Types.SubmitSuccess, { eventData: data, res, response: res, startTime, endTime: Date.now(), status });
+          }
+        },
+        fail: (eventData, errorCode, startTime) => {
+          this.collect.emit(Types.SubmitError, { type: 'f_net', eventData, errorCode, startTime, endTime: Date.now() })
+        }
+      })
       this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报成功', time: Date.now(), data: data, code: 200, status: 'success' })
     } catch (e) {
       this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });

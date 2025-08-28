@@ -249,24 +249,28 @@ export default class Event {
         if (!reportItem.length) return;
         this.collect.emit(Types.SubmitBefore, reportItem);
         const encodeItem = this.collect.cryptoData(reportItem);
-        request(this.reportUrl, encodeItem, this.timeout, false,
-          (res, data) => {
+        this.collect.requestManager.useRequest({
+          url: this.reportUrl,
+          data: encodeItem,
+          success: (res, data, statusType, startTime, status) => {
             if (res && res.e !== 0) {
-              this.collect.emit(Types.SubmitError, { type: 'f_data', eventData: data, errorCode: res.e, response: res });
-              this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报失败', time: Date.now(), data: checkItem, code: res.e, failType: '数据异常', status: 'fail' })
+              this.collect.emit(Types.SubmitError, { type: 'f_data', eventData: data, errorCode: res.e, response: res, startTime, endTime: Date.now(), status });
+              this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报失败', time: Date.now(), data: checkItem, code: res.e, failType: '数据异常失败', status: 'fail' })
             } else {
-              this.collect.emit(Types.SubmitScuess, { eventData: data, res });
+              this.collect.emit(Types.SubmitSuccess, { eventData: data, res, response: res, startTime, endTime: Date.now(), status });
               this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报成功', time: Date.now(), data: checkItem, code: 200, status: 'success' })
             }
           },
-          (eventData, errorCode) => {
+          fail: (eventData, errorCode, startTime, errorMessage) => {
             this.configManager.get('reportErrorCallback')(eventData, errorCode)
-            this.collect.emit(Types.SubmitError, { type: 'f_net', eventData, errorCode })
-            this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报网络异常', time: Date.now(), data: checkItem, code: errorCode, failType: '网络异常', status: 'fail' })
-
-          }, becon, this.config.enable_encryption, this.config.encryption_header
-        )
-        this.eventCheck.checkVerify(reportItem);
+            this.collect.emit(Types.SubmitError, { type: 'f_net', eventData, errorCode, startTime, errorMessage, endTime: Date.now() })
+            this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报网络异常', time: Date.now(), data: checkItem, code: errorCode, failType: '网络异常失败', status: 'fail' })
+          },
+          timeout: this.timeout,
+          useBeacon: becon,
+          encryption: this.config.enable_encryption,
+          encryption_header: this.config.encryption_header,
+        })
         this.collect.emit(Types.SubmitVerifyH, reportItem);
         this.collect.emit(Types.SubmitAfter, reportItem);
       } catch (e) {

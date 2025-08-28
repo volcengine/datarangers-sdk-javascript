@@ -3,7 +3,6 @@
 import { IInitParam } from '../../types/types'
 import Types from './hooktype';
 import Storage from '../util/storage'
-import fetch from '../util/fetch'
 import { parseUrlQuery } from '../util/tool'
 import { DebuggerMesssge } from './hooktype'
 import localWebId from '../util/local'
@@ -31,6 +30,7 @@ export default class Token {
   enableTTwebid: boolean = false
   enableCustomWebid: boolean = false
   enableAnonymousid: boolean = false
+  timeout: number
   apply(collect: any, config: IInitParam) {
     this.collect = collect
     this.config = config
@@ -49,6 +49,7 @@ export default class Token {
     this.collect.on(Types.ConfigWebId, (webId: string) => {
       this.setWebId(webId);
     })
+    this.timeout = config.timeout || 300000
     this.enableCookie = config.cross_subdomain
     this.expiresTime = config.cookie_expire || 60 * 60 * 1000 * 24 * 7
     this.cookieDomain = config.cookie_domain || ''
@@ -116,7 +117,7 @@ export default class Token {
   }
 
   remoteWebid() {
-    const fetchUrl = this.configManager.getUrl('webid')
+    const fetchUrl = this.configManager.getUrl('webid');
     const requestBody = {
       app_key: this.config.app_key,
       app_id: this.config.app_id,
@@ -126,16 +127,17 @@ export default class Token {
       user_unique_id: '',
     }
     this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 发起WEBID请求', logType: 'fetch', level: 'info', time: Date.now(), data: requestBody })
-    const localId = localWebId();
     const encryptData = this.collect.cryptoData(requestBody)
-    fetch(fetchUrl, encryptData,
-      300000, false,
-      (data) => {
+    this.collect.requestManager.useRequest({
+      url: fetchUrl,
+      data: encryptData,
+      success: (data) => {
         let webid
         if (data && data.e === 0) {
           webid = data.web_id
           this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'WEBID请求成功', logType: 'fetch', level: 'info', time: Date.now(), data: data })
         } else {
+          const localId = this.getLocalId()
           webid = localId
           this.collect.configManager.set({
             localWebId: localId
@@ -149,7 +151,8 @@ export default class Token {
           user_unique_id: this.configManager.get('user_unique_id') || webid
         })
       },
-      () => {
+      fail: () => {
+        const localId = this.getLocalId()
         this.complete({
           web_id: this.configManager.get('web_id') || localId,
           user_unique_id: this.configManager.get('user_unique_id') || localId
@@ -159,10 +162,29 @@ export default class Token {
         })
         this.collect.emit(Types.TokenError)
         this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'WEBID请求网络异常', logType: 'fetch', level: 'error', time: Date.now(), data: null })
-        this.collect.logger.warn(`appid: ${this.config.app_id}, get webid error, use local webid~`)
-      }, '', '', this.config.enable_encryption, this.config.encryption_header
-    )
+        this.collect.logger.warn(`appid: ${this.config.app_id}, get webid error, use local webid~`);
+      },
+      timeout: this.timeout,
+      encryption: this.config.enable_encryption,
+      encryption_header: this.config.encryption_header
+    })
   }
+  getLocalId() {
+    let local = localWebId();
+    let index = 0;
+    while (local.indexOf('0') === 0 || local.indexOf('9') === 0) {
+      if (index >= 10) {
+        const regex = /^(0|9)/;
+        local = local.replace(regex, '');
+        break;
+      } else {
+        local = localWebId();
+        index++
+      }
+    }
+    return local;
+  }
+
   complete(token: TokenT) {
     const { web_id, user_unique_id } = token
     if (!web_id && !user_unique_id) {
@@ -306,21 +328,30 @@ export default class Token {
       requestBody['web_id'] = this.configManager.get('web_id')
     }
     const encryptData = this.collect.cryptoData(requestBody)
+    
     return new Promise(resolve => {
-      fetch(tobUrl, encryptData,
-        30000,
-        this.enableTTwebid,
-        (data) => {
+      this.collect.requestManager.useRequest({
+        url: this.configManager.getUrl('tobid'),
+        data: encryptData,
+        success: (data) => {
           if (data && data.e === 0) {
             resolve(data.tobid)
+            this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'GetToken请求成功', logType: 'fetch', level: 'info', time: Date.now(), data: data, infoType: 'sdk' })
+
           } else {
             resolve('')
+            this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'GetToken请求失败', logType: 'fetch', level: 'error', time: Date.now(), data: data, infoType: 'sdk' })
+
           }
         },
-        () => {
+        fail: () => {
           resolve('')
-        }, '', '', this.config.enable_encryption, this.config.encryption_header
-      )
+          this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'GetToken请求失败', logType: 'fetch', level: 'error', time: Date.now(), infoType: 'sdk' })
+        },
+        timeout: this.timeout,
+        encryption: this.config.enable_encryption,
+        encryption_header: this.config.encryption_header
+      })
     })
   }
 }

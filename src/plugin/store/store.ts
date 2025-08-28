@@ -6,7 +6,6 @@ class Store {
   storage: any
   eventKey: string
   storageNum: number
-  fetch: any
   eventUrl: string
   retryNum: number
   retryInterval: number
@@ -20,9 +19,8 @@ class Store {
     this.config = config;
     if (this.collect.destroyInstance) return;
     const { Types } = collect;
-    const { storage, fetch } = collect.adapters;
+    const { storage } = collect.adapters;
     this.storage = new storage(false);
-    this.fetch = fetch;
     this.eventUrl = this.collect.configManager.getUrl('event');
     this.eventKey = `__tea_cache_events_${config.app_id}`;
     this.storageNum = config.storage_num || 50; // 默认最大存储50条数据
@@ -111,12 +109,19 @@ class Store {
     }
   }
   fetchData(data: any, success?: any, fail?: any, test?: boolean) {
-    this.fetch(this.eventUrl, data, 30000, false, () => {
-      success && success();
-    }, () => {
-      fail && fail();
-      console.log('network error，compensate report failk');
-    }, test && !this.config.channel_domain ? '566f58151b0ed37e' : '')
+    this.collect.requestManager.useRequest({
+      url: this.eventUrl,
+      data,
+      timeout: 30000,
+      success: () => {
+        success && success();
+      },
+      fail: () => {
+        fail && fail();
+        console.log('network error，compensate report failk');
+      },
+      app_key: test && !this.config.channel_domain ? '566f58151b0ed37e' : ''
+    })
   }
 }
 

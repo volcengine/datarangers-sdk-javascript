@@ -4,7 +4,6 @@ import Ab from '../plugin/ab/ab'
 import Stay from '../plugin/stay/stay'
 import Profile from '../plugin/profile/profile'
 import HeartBeat from '../plugin/heartbeat/heartbeat'
-import Monitor from '../plugin/monitor/index'
 import Autotrack from '../plugin/track/index'
 import RuotePage from '../plugin/route/route'
 import VerifyH from "../plugin/verify/verify_h5"
@@ -19,7 +18,6 @@ collector.usePlugin(TrackDuration, 'trackDuration')
 collector.usePlugin(VerifyH, 'verify')
 collector.usePlugin(Profile, 'profile')
 collector.usePlugin(HeartBeat, 'heartbeat')
-collector.usePlugin(Monitor, 'monitor')
 collector.usePlugin(RuotePage, 'route')
 
 const Tea = new collector('default')

@@ -38,6 +38,7 @@ export default class ConfigManager {
   isLast: boolean
   configPersist: boolean = false
   eventCheck: any
+  enableClientTransport: boolean = false
   constructor(collect: any, initConfig: any) {
     this.initConfig = initConfig
     this.collect = collect
@@ -141,6 +142,7 @@ export default class ConfigManager {
     this.setCustom(commonInfo);
     this.initDomain();
     this.initABData();
+    this.setEnableClientTransport(this.initConfig.transport ? true : false);
   }
   initDomain() {
     const channelDomain = this.initConfig['channel_domain'];
@@ -184,6 +186,15 @@ export default class ConfigManager {
   getAbVersion() {
     return this.ab_version
   }
+
+  setEnableClientTransport(enable: boolean) {
+    this.enableClientTransport = enable;
+  }
+
+  getEnableClientTransport() {
+    return this.enableClientTransport;
+  }
+
   getUrl(type: string) {
     let report = ''
     switch (type) {
