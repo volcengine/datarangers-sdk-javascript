@@ -280,3 +280,27 @@ export const removeListener = (target, type, handler, pop) => {
     target.detachEven(`on${type}`, handler)
   }
 }
+
+export const isIE789 = () => {
+  const browserName = window.navigator.appName
+  const ua = window.navigator.userAgent
+  const IE789 = browserName.indexOf('Microsoft Internet Explorer') !== -1 &&
+    (ua.indexOf('MSIE 8.0') !== -1 || ua.indexOf('MSIE 7.0') !== -1 || ua.indexOf('MSIE 9.0') !== -1)
+  return IE789
+}
+
+export const isIE89 = () => {
+  const browserName = window.navigator.appName
+  const ua = window.navigator.userAgent
+  const IE89 = browserName.indexOf('Microsoft Internet Explorer') !== -1 &&
+    (ua.indexOf('MSIE 8.0') !== -1 || ua.indexOf('MSIE 9.0') !== -1)
+  return IE89
+}
+
+export const isIE7 = () => {
+  const browserName = window.navigator.appName
+  const ua = window.navigator.userAgent
+  const IE7 = browserName.indexOf('Microsoft Internet Explorer') !== -1 &&
+    (ua.indexOf('MSIE 7.0') !== -1)
+  return IE7
+}

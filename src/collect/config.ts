@@ -1,7 +1,7 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 
 import Client from '../util/client'
-import Storage from '../util/storage'
+import StorageManager from '../plugin/storage'
 import { decodeUrl } from '../util/tool'
 import { SDK_VERSION, LOG_URL } from './constant'
 import EventCheck from '../plugin/check/check'
@@ -38,6 +38,7 @@ export default class ConfigManager {
   isLast: boolean
   configPersist: boolean = false
   eventCheck: any
+  enableClientTransport: boolean = false
   constructor(collect: any, initConfig: any) {
     this.initConfig = initConfig
     this.collect = collect
@@ -46,18 +47,17 @@ export default class ConfigManager {
     this.eventCheck = new EventCheck(collect, initConfig)
     const firstKey = `__tea_cache_first_${initConfig.app_id}`
     this.configKey = `__tea_cache_config_${initConfig.app_id}`
-    this.sessionStorage = new Storage(false, 'session')
-    this.localStorage = new Storage(false, 'local')
+    this.storage = new StorageManager()
     if (initConfig.configPersist) {
       this.configPersist = true
       this.storage = initConfig.configPersist === 1 ? this.sessionStorage : this.localStorage
     }
-    const firstStatus = this.localStorage.getItem(firstKey)
+    const firstStatus = this.storage.getLocalItem(firstKey)
     if (firstStatus && firstStatus == 1) {
       this.is_first_time = false
     } else {
       this.is_first_time = true
-      this.localStorage.setItem(firstKey, '1')
+      this.storage.setLocalItem(firstKey, '1')
     }
     this.envInfo = {
       user: {
@@ -141,6 +141,7 @@ export default class ConfigManager {
     this.setCustom(commonInfo);
     this.initDomain();
     this.initABData();
+    this.setEnableClientTransport(this.initConfig.transport ? true : false);
   }
   initDomain() {
     const channelDomain = this.initConfig['channel_domain'];
@@ -184,6 +185,15 @@ export default class ConfigManager {
   getAbVersion() {
     return this.ab_version
   }
+
+  setEnableClientTransport(enable: boolean) {
+    this.enableClientTransport = enable;
+  }
+
+  getEnableClientTransport() {
+    return this.enableClientTransport;
+  }
+
   getUrl(type: string) {
     let report = ''
     switch (type) {
@@ -291,27 +301,41 @@ export default class ConfigManager {
         return JSON.parse(JSON.stringify(this.envInfo))
       }
     } catch (e) {
-      console.log('get config stringify error ')
+      console.log('get config stringify error ');
       this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
+    }
+  }
+  getItem(key) {
+    if (this.initConfig?.configPersist === 1) {
+      return this.storage.getSessionItem(key);
+    } else {
+      return this.storage.getLocalItem(key)
+    }
+  }
+
+  setItem(key, value) {
+    if (this.initConfig?.configPersist === 1) {
+      this.storage.setSessionItem(key, value);
+    } else {
+      this.storage.setLocalItem(key, value)
     }
   }
   setStore(config: any) {
     try {
       if (!this.configPersist) return;
-      const _cache = this.storage.getItem(this.configKey) || {}
+      const _cache = this.getItem(this.configKey) || {}
       if (_cache && Object.keys(config).length) {
         const newCache = Object.assign(config, _cache)
-        this.storage.setItem(this.configKey, newCache)
+        this.setItem(this.configKey, newCache)
       }
     } catch (e) {
-      console.log('setStore error')
       this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
     }
   }
   getStore() {
     try {
       if (!this.configPersist) return null;
-      const _cache = this.storage.getItem(this.configKey) || {}
+      const _cache = this.getItem(this.configKey) || {}
       if (_cache && Object.keys(_cache).length) {
         return _cache
       } else {
@@ -325,14 +349,13 @@ export default class ConfigManager {
   delete(key: string) {
     try {
       if (!this.configPersist) return;
-      const _cache = this.storage.getItem(this.configKey) || {}
+      const _cache = this.getItem(this.configKey) || {}
       if (_cache && Object.hasOwnProperty.call(_cache, key)) {
         delete _cache[key]
-        this.storage.setItem(this.configKey, _cache)
+        this.setItem(this.configKey, _cache)
       }
     } catch (e) {
       this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: '发生了异常', level: 'error', time: Date.now(), data: e.message });
-      console.log('delete error')
     }
   }
 }

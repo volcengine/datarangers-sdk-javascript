@@ -57,6 +57,9 @@ export interface IInitParam {
   crypto_publicKey?: string
   encryption_type?: string
   encryption_header?: string
+  request_type?: string
+  custom_request_header?: Record<string, any>
+  transport?: SdkTransport
 }
 
 export interface IConfigParam {
@@ -112,7 +115,27 @@ export interface IConfigParam {
   [key: string]: any;
 }
 
-type EventParams = Record<string, any>;
+
+export interface GetOptions {
+  url: string
+  success?: Function
+  fail?: Function
+  withCredentials?: boolean
+}
+
+export interface PostOptions {
+  url: string
+  data?: string
+  success?: Function
+  fail?: Function
+}
+
+export interface SdkTransport {
+  get: (options: GetOptions) => void
+  post: (options: PostOptions) => void
+}
+
+export type EventParams = Record<string, any>;
 
 export type SdkOption = Omit<IInitParam, 'app_id'>;
 

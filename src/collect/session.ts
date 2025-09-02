@@ -1,7 +1,7 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
 
-import Types from './hooktype'
-import Storage from '../util/storage'
+import Types from './hooktype';
+import StorageManager from '../plugin/storage';
 
 interface SessionCacheType {
   sessionId: string,
@@ -23,7 +23,7 @@ export default class Session {
   collect: any
   apply(collect: any, config: any) {
     this.collect = collect
-    this.storage = new Storage(false, 'session')
+    this.storage = new StorageManager()
     this.sessionKey = `__tea_session_id_${config.app_id}`
     this.expireTime = config.expireTime || 30 * 60 * 1000
     this.disableSession = config.disable_session
@@ -37,10 +37,10 @@ export default class Session {
     })
   }
   updateSessionIdTime() {
-    var sessionCache: SessionCacheType = this.storage.getItem(this.sessionKey)
+    let sessionCache: SessionCacheType = this.storage.getSessionItem(this.sessionKey)
     if (sessionCache && sessionCache.sessionId) {
-      var _oldTime = sessionCache.timestamp
-      if ((Date.now() - _oldTime) > this.expireTime) {
+      const oldTime = sessionCache.timestamp
+      if ((Date.now() - oldTime) > this.expireTime) {
         // 30分钟超时
         sessionCache = {
           sessionId: sessionId(),
@@ -49,12 +49,12 @@ export default class Session {
       } else {
         sessionCache.timestamp = Date.now()
       }
-      this.storage.setItem(this.sessionKey, sessionCache)
+      this.storage.setSessionItem(this.sessionKey, sessionCache)
       this.resetExpTime()
     }
   }
   setSessionId() {
-    var sessionCache: SessionCacheType = this.storage.getItem(this.sessionKey)
+    let sessionCache: SessionCacheType = this.storage.getSessionItem(this.sessionKey)
     if (sessionCache && sessionCache.sessionId) {
       sessionCache.timestamp = Date.now()
     } else {
@@ -63,13 +63,13 @@ export default class Session {
         timestamp: Date.now()
       }
     }
-    this.storage.setItem(this.sessionKey, sessionCache)
+    this.storage.setSessionItem(this.sessionKey, sessionCache)
     this.sessionExp = setInterval(() => {
       this.checkEXp()
     }, this.expireTime)
   }
   getSessionId() {
-    var sessionCache: SessionCacheType = this.storage.getItem(this.sessionKey)
+    const sessionCache: SessionCacheType = this.storage.getSessionItem(this.sessionKey)
     if (this.disableSession) {
       return ''
     }
@@ -88,23 +88,23 @@ export default class Session {
     }
   }
   resetSessionId() {
-    var sessionCache = {
+    const sessionCache = {
       sessionId: sessionId(),
       timestamp: Date.now()
     }
     this.storage.setItem(this.sessionKey, sessionCache)
   }
   checkEXp() {
-    var sessionCache: SessionCacheType = this.storage.getItem(this.sessionKey)
+    let sessionCache: SessionCacheType = this.storage.getSessionItem(this.sessionKey)
     if (sessionCache && sessionCache.sessionId) {
-      var _oldTime = Date.now() - sessionCache.timestamp
-      if (_oldTime + 30 >= this.expireTime) {
+      const oldTime = Date.now() - sessionCache.timestamp
+      if (oldTime + 30 >= this.expireTime) {
         // 30分钟超时
         sessionCache = {
           sessionId: sessionId(),
           timestamp: Date.now()
         }
-        this.storage.setItem(this.sessionKey, sessionCache)
+        this.storage.setSessionItem(this.sessionKey, sessionCache)
       }
     }
   }

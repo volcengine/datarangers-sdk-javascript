@@ -27,6 +27,7 @@ enum Types {
   BeconEvent = 'becon-event',
   SubmitBefore = 'submit-before',
   SubmitScuess = 'submit-scuess',
+  SubmitSuccess = 'submit-success',
   SubmitAfter = 'submit-after',
   SubmitError = 'submit-error',
   SubmitVerifyH = 'submit-verify-h5',
@@ -69,7 +70,7 @@ enum Types {
   Autotrack = 'autotrack',
   AutotrackReady = 'autotrack-ready',
 
-  CepReady = 'cep-ready',
+  CustomHeader = 'custom-request-header',
 
   TracerReady = 'tracer-ready'
 }

@@ -2,11 +2,10 @@
 
 import Types from './hooktype';
 import { IInitParam } from '../../types/types'
-import Storage from '../util/storage'
-import request from '../util/request'
 import { beforePageUnload, encodeBase64, decodeBase64 } from '../util/tool'
 import { DebuggerMesssge } from './hooktype';
 import EventCheck from '../plugin/check/check';
+import StorageManager from '../plugin/storage';
 
 type TEvent = any;
 export default class Event {
@@ -16,8 +15,7 @@ export default class Event {
   eventKey: string
   beconKey: string
   abKey: string
-  cacheStorgae: any
-  localStorage: any
+  storgae: any
   reportTimeout: any
   maxReport: number
   reportTime: number
@@ -32,8 +30,7 @@ export default class Event {
     this.collect = collect
     this.config = config
     this.configManager = collect.configManager
-    this.cacheStorgae = new Storage(true)
-    this.localStorage = new Storage(false)
+    this.storgae = new StorageManager()
     this.eventCheck = new EventCheck(collect, config)
     this.maxReport = config.max_report || 20
     this.reportTime = config.reportTime || 30
@@ -82,9 +79,9 @@ export default class Event {
   }
   event(events: any) {
     try {
-      const cache = this.cacheStorgae.getItem(this.eventKey) || []
+      const cache = this.storgae.getCacheItem(this.eventKey) || []
       const newCache = [...events, ...cache]
-      this.cacheStorgae.setItem(this.eventKey, newCache)
+      this.storgae.setCacheItem(this.eventKey, newCache)
       if (this.reportTimeout) {
         clearTimeout(this.reportTimeout)
       }
@@ -102,28 +99,28 @@ export default class Event {
     }
   }
   beconEvent(events: any) {
-    const cache = this.cacheStorgae.getItem(this.beconKey) || []
+    const cache = this.storgae.getCacheItem(this.beconKey) || []
     const newCache = [...events, ...cache]
-    this.cacheStorgae.setItem(this.beconKey, newCache)
+    this.storgae.setCacheItem(this.beconKey, newCache)
     if (this.collect.destroyInstance) return
     if (!this.collect.tokenManager.getReady()) return
     if (!this.collect.sdkReady) return
-    this.cacheStorgae.removeItem(this.beconKey)
+    this.storgae.removeCacheItem(this.beconKey)
     this.send(this.split(this.merge(newCache)), true)
   }
   reportBecon() {
-    const cache = this.cacheStorgae.getItem(this.beconKey) || []
+    const cache = this.storgae.getCacheItem(this.beconKey) || []
     if (!cache || !cache.length) return
-    this.cacheStorgae.removeItem(this.beconKey)
+    this.storgae.removeCacheItem(this.beconKey)
     this.send(this.split(this.merge(cache)), true)
   }
   report(becon: boolean) {
     if (this.collect.destroyInstance) return
     if (!this.collect.tokenManager.getReady()) return
     if (!this.collect.sdkReady) return
-    const eventData = this.cacheStorgae.getItem(this.eventKey) || []
+    const eventData = this.storgae.getCacheItem(this.eventKey) || []
     if (!eventData.length) return
-    this.cacheStorgae.removeItem(this.eventKey)
+    this.storgae.removeCacheItem(this.eventKey)
     this.sliceEvent(eventData, becon);
   }
   sliceEvent(events: any, becon: boolean) {
@@ -143,7 +140,7 @@ export default class Event {
     let refer = ''
     try {
       if (this.config.spa || this.config.autotrack) {
-        const cache_local = this.localStorage.getItem(this.refer_key) || {}
+        const cache_local = this.storgae.getLocalItem(this.refer_key) || {}
         if (cache_local.routeChange) {
           // 已经发生路由变化
           refer = cache_local.refer_key;
@@ -249,24 +246,28 @@ export default class Event {
         if (!reportItem.length) return;
         this.collect.emit(Types.SubmitBefore, reportItem);
         const encodeItem = this.collect.cryptoData(reportItem);
-        request(this.reportUrl, encodeItem, this.timeout, false,
-          (res, data) => {
+        this.collect.requestManager.useRequest({
+          url: this.reportUrl,
+          data: encodeItem,
+          success: (res, data, statusType, startTime, status) => {
             if (res && res.e !== 0) {
-              this.collect.emit(Types.SubmitError, { type: 'f_data', eventData: data, errorCode: res.e, response: res });
-              this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报失败', time: Date.now(), data: checkItem, code: res.e, failType: '数据异常', status: 'fail' })
+              this.collect.emit(Types.SubmitError, { type: 'f_data', eventData: data, errorCode: res.e, response: res, startTime, endTime: Date.now(), status });
+              this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报失败', time: Date.now(), data: checkItem, code: res.e, failType: '数据异常失败', status: 'fail' })
             } else {
-              this.collect.emit(Types.SubmitScuess, { eventData: data, res });
+              this.collect.emit(Types.SubmitSuccess, { eventData: data, res, response: res, startTime, endTime: Date.now(), status });
               this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报成功', time: Date.now(), data: checkItem, code: 200, status: 'success' })
             }
           },
-          (eventData, errorCode) => {
+          fail: (eventData, errorCode, startTime, errorMessage) => {
             this.configManager.get('reportErrorCallback')(eventData, errorCode)
-            this.collect.emit(Types.SubmitError, { type: 'f_net', eventData, errorCode })
-            this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报网络异常', time: Date.now(), data: checkItem, code: errorCode, failType: '网络异常', status: 'fail' })
-
-          }, becon, this.config.enable_encryption, this.config.encryption_header
-        )
-        this.eventCheck.checkVerify(reportItem);
+            this.collect.emit(Types.SubmitError, { type: 'f_net', eventData, errorCode, startTime, errorMessage, endTime: Date.now() })
+            this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报网络异常', time: Date.now(), data: checkItem, code: errorCode, failType: '网络异常失败', status: 'fail' })
+          },
+          timeout: this.timeout,
+          useBeacon: becon,
+          encryption: this.config.enable_encryption,
+          encryption_header: this.config.encryption_header,
+        })
         this.collect.emit(Types.SubmitVerifyH, reportItem);
         this.collect.emit(Types.SubmitAfter, reportItem);
       } catch (e) {

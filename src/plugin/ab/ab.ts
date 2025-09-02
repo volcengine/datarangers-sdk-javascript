@@ -5,6 +5,7 @@ import { AB_DOMAINS } from '../../collect/constant'
 import { DebuggerMesssge } from '../../collect/hooktype';
 import { getIframeUrl, isObject, parseUrlQuery, parseURL, decodeUrl } from '../../util/tool';
 // import readyToLoadEditor, { loadVisual, loadMuiltlink } from './load';
+import StorageManager from '../storage';
 
 enum CallbackType {
   Var,
@@ -61,9 +62,7 @@ export default class Ab {
     if (!this.config.enable_ab_test) return;
     const { enable_multilink, ab_channel_domain, enable_ab_visual, ab_cross, ab_cookie_domain, disable_ab_reset } = config;
     const abDomain = ab_channel_domain || decodeUrl(AB_DOMAINS[config.channel || 'cn']);
-    const { storage, fetch } = collect.adapters;
-    this.cacheStorgae = new storage(false);
-    this.fetch = fetch;
+    this.cacheStorgae = new StorageManager();
     this.enable_multilink = enable_multilink;
     this.enable_ab_visual = enable_ab_visual;
     this.abKey = `__tea_sdk_ab_version_${config.app_id}`;
@@ -344,7 +343,16 @@ export default class Ab {
   }
   report() {
     const encodeData = this.collect.cryptoData(this.exposureCache);
-    this.fetch(this.reportUrl, encodeData, 100000, false, () => { }, () => { }, '', 'POST', this.config.enable_encryption, this.config.encryption_header)
+    this.collect.requestManager.useRequest({
+      url: this.reportUrl,
+      data: encodeData,
+      timeout: 100000,
+      useBeacon: false,
+      encryption: this.config.enable_encryption,
+      encryption_header: this.config.encryption_header,
+      zip: true,
+      type: 'event',
+    })
     this.exposureCache.forEach(item => {
       this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_EVENT, info: '埋点上报成功', time: Date.now(), data: [item], code: 200, status: 'success' })
     })
@@ -366,14 +374,14 @@ export default class Ab {
       const ab_cookie = this.cacheStorgae.getCookie(key, this.ab_cookie_domain);
       return ab_cookie ? JSON.parse(ab_cookie) : null;
     } else {
-      return this.cacheStorgae.getItem(key);
+      return this.cacheStorgae.getLocalItem(key);
     }
   }
   set(key: string, data: any) {
     if (this.ab_cross) {
       this.cacheStorgae.setCookie(key, data, STORAGE_EXPRIRE, this.ab_cookie_domain);
     } else {
-      this.cacheStorgae.setItem(key, data);
+      this.cacheStorgae.setLocalItem(key, data);
     }
     this.collect.configManager.setAbCache(data);
   }
@@ -388,7 +396,7 @@ export default class Ab {
     };
     data = this.get(this.abKey) || data;
     if (Date.now() - data.timestamp >= STORAGE_EXPRIRE) {
-      this.cacheStorgae.removeItem(this.abKey);
+      this.cacheStorgae.removeLocalItem(this.abKey);
       return null;
     }
     if (key) {
@@ -510,13 +518,12 @@ export default class Ab {
         ab_url: window.location.href
       },
     }
-    this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 发起AB实验请求', level: 'info', logType: 'fetch', time: Date.now(), data: requestBody })
     const cryptoData = this.collect.cryptoData(requestBody)
-    this.fetch(
-      this.fetchUrl, cryptoData,
-      this.config.ab_timeout || 3000,
-      false,
-      (response) => {
+    this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, info: 'SDK 发起AB实验请求', level: 'info', logType: 'fetch', time: Date.now(), data: requestBody, infoType: 'sdk' })
+    this.collect.requestManager.useRequest({
+      url: this.fetchUrl,
+      data: cryptoData,
+      success: (response) => {
         this.fetchStatus = 'complete';
         this.refreshFetchStatus = 'complete';
         // let aa = {
@@ -526,13 +533,11 @@ export default class Ab {
         //     erf: { val: 'name', vid: "22" },
         //     hhhhh: { val: 'age', vid: "33" },
         //     juuioh: { val: 'sex', vid: "44" },
-        //     $ab_url: { val: 'http://0.0.0.0:8898/index_cdn_5.html?s=2', vid: '0000' }
+        //     $ab_url: { val: 'http://0.0.0.0:8899/index_cdn_5.html?off=true', vid: '0000' }
         //   }
         // }
-        // if (env.user.user_unique_id === 'bbbb') {
-        //   aa.data.abcdefg.vid = '11408'
-        // } else if (env.user.user_unique_id === 'cccc') {
-        //   aa.data.abcdefg.vid = '11409'
+        // if (env.user.user_unique_id === 'ssss') {
+        //   aa.data.abcdefg.vid = '00000'
         // }
         const { data, message } = response; // 解析出code
         if (message === 'success') {
@@ -543,18 +548,21 @@ export default class Ab {
           callback && callback(null);
         }
         this.collect.emit(this.types.AbComplete, data)
-        this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, secType: 'AB', info: 'AB实验请求成功', level: 'info', logType: 'fetch', time: Date.now(), data: data })
+        this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, secType: 'AB', info: 'AB实验请求成功', level: 'info', logType: 'fetch', time: Date.now(), data: data, infoType: 'sdk' })
       },
-      () => {
+      fail: () => {
         this.fetchStatus = 'complete';
         this.refreshFetchStatus = 'complete';
         this.fetchComplete(null, fetchUuid);
         callback && callback(null);
         this.collect.emit(this.types.AbTimeout)
-        this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, secType: 'AB', info: 'AB实验请求网络异常', level: 'error', logType: 'fetch', time: Date.now() })
+
+        this.collect.emit(DebuggerMesssge.DEBUGGER_MESSAGE, { type: DebuggerMesssge.DEBUGGER_MESSAGE_SDK, secType: 'AB', info: 'AB实验请求网络异常', level: 'error', logType: 'fetch', time: Date.now(), infoType: 'sdk' })
       },
-      '', '', this.config.enable_encryption, this.config.encryption_header
-    );
+      timeout: this.config.ab_timeout || 10000,
+      encryption: this.config.enable_encryption,
+      encryption_header: this.config.encryption_header
+    })
   }
   filterUrl(url: string) {
     try {
