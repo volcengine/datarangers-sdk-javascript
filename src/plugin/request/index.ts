@@ -1,7 +1,8 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 // 通用请求管理
 import { IInitParam, EventParams } from '../../../types/types'
 import Collector from '../../collect/collect';
-import { isIE89, isIE7 } from '../../util/tool'
 import Types, { DebuggerMesssge } from '../../collect/hooktype';
 
 const isSupportBeacon = () => {

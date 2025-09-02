@@ -5,6 +5,7 @@ import { AB_DOMAINS } from '../../collect/constant'
 import { DebuggerMesssge } from '../../collect/hooktype';
 import { getIframeUrl, isObject, parseUrlQuery, parseURL, decodeUrl } from '../../util/tool';
 // import readyToLoadEditor, { loadVisual, loadMuiltlink } from './load';
+import StorageManager from '../storage';
 
 enum CallbackType {
   Var,
@@ -61,8 +62,7 @@ export default class Ab {
     if (!this.config.enable_ab_test) return;
     const { enable_multilink, ab_channel_domain, enable_ab_visual, ab_cross, ab_cookie_domain, disable_ab_reset } = config;
     const abDomain = ab_channel_domain || decodeUrl(AB_DOMAINS[config.channel || 'cn']);
-    const { storage } = collect.adapters;
-    this.cacheStorgae = new storage(false);
+    this.cacheStorgae = new StorageManager();
     this.enable_multilink = enable_multilink;
     this.enable_ab_visual = enable_ab_visual;
     this.abKey = `__tea_sdk_ab_version_${config.app_id}`;
@@ -374,14 +374,14 @@ export default class Ab {
       const ab_cookie = this.cacheStorgae.getCookie(key, this.ab_cookie_domain);
       return ab_cookie ? JSON.parse(ab_cookie) : null;
     } else {
-      return this.cacheStorgae.getItem(key);
+      return this.cacheStorgae.getLocalItem(key);
     }
   }
   set(key: string, data: any) {
     if (this.ab_cross) {
       this.cacheStorgae.setCookie(key, data, STORAGE_EXPRIRE, this.ab_cookie_domain);
     } else {
-      this.cacheStorgae.setItem(key, data);
+      this.cacheStorgae.setLocalItem(key, data);
     }
     this.collect.configManager.setAbCache(data);
   }
@@ -396,7 +396,7 @@ export default class Ab {
     };
     data = this.get(this.abKey) || data;
     if (Date.now() - data.timestamp >= STORAGE_EXPRIRE) {
-      this.cacheStorgae.removeItem(this.abKey);
+      this.cacheStorgae.removeLocalItem(this.abKey);
       return null;
     }
     if (key) {

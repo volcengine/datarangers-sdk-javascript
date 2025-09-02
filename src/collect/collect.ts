@@ -12,7 +12,6 @@ import Event from './event'
 import Token from './token'
 import Session from './session';
 import { SDK_VERSION } from './constant'
-import Storage from '../util/storage'
 import RequestManager from '../plugin/request'
 // import Debugger from '../plugin/debug/debug';
 import { Encrypt } from '../util/sm2crypto'
@@ -69,7 +68,6 @@ export default class Collector {
     this.logger = new Logger(name)
     this.remotePlugin = new Map()
     this.Types = Types
-    this.adapters['storage'] = Storage
   }
   static usePlugin(plugin: IPlugin, name?: string, options?: any) {
     if (name) {

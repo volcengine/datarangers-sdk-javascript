@@ -1,3 +1,5 @@
+// Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
+
 // debugger icon的可拖拽
 export default class DraggableButton {
   element: HTMLElement

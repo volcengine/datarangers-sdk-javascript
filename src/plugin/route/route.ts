@@ -1,5 +1,6 @@
 // Copyright 2022 Beijing Volcanoengine Technology Ltd. All Rights Reserved.
-import { DebuggerMesssge } from '../../collect/hooktype'
+import { DebuggerMesssge } from '../../collect/hooktype';
+import StorageManager from '../storage';
 
 class RuotePage {
   storage: any
@@ -29,8 +30,7 @@ class RuotePage {
     collect.emit(Types.RouteReady)
   }
   setKey() {
-    const { storage } = this.collect.adapters;
-    this.storage = new storage(false)
+    this.storage = new StorageManager()
     this.cache_key = `__tea_cache_refer_${this.appid}`
     this.cache = {
       refer_key: '',
@@ -41,7 +41,7 @@ class RuotePage {
     if (this.config.autotrack && typeof this.config.autotrack === 'object' && this.config.autotrack.page_manual_key) {
       this.cache.refer_manual_key = this.config.autotrack.page_manual_key
     }
-    this.storage.setItem(this.cache_key, this.cache)
+    this.storage.setLocalItem(this.cache_key, this.cache)
   }
   hack() {
     const oldPushState = window.history.pushState;
@@ -117,9 +117,9 @@ class RuotePage {
   }
   pageConfig() {
     try {
-      const cache_local = this.storage.getItem(this.cache_key) || {}
+      const cache_local = this.storage.getLocalItem(this.cache_key) || {}
       let is_first_time = false
-      const firstStatus = this.storage.getItem(`__tea_cache_first_${this.appid}`)
+      const firstStatus = this.storage.getLocalItem(`__tea_cache_first_${this.appid}`)
       if (firstStatus && firstStatus == 1) {
         is_first_time = false
       } else {
@@ -150,7 +150,7 @@ class RuotePage {
   handleRefer() {
     let refer = ''
     try {
-      const cache_local = this.storage.getItem() || {}
+      const cache_local = this.storage.getLocalItem() || {}
       if (cache_local.routeChange) {
         // 已经发生路由变化
         refer = cache_local.refer_key;
@@ -165,11 +165,11 @@ class RuotePage {
     return refer
   }
   setReferCache(url: string) {
-    const cache_local = this.storage.getItem(this.cache_key) || {}
+    const cache_local = this.storage.getLocalItem(this.cache_key) || {}
     cache_local.refer_key = url
     // 不再是第一次进入页面
     cache_local.routeChange = true
-    this.storage.setItem(this.cache_key, cache_local)
+    this.storage.setLocalItem(this.cache_key, cache_local)
   }
 }
 export default RuotePage

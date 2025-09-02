@@ -2,11 +2,11 @@
 
 import { IInitParam } from '../../types/types'
 import Types from './hooktype';
-import Storage from '../util/storage'
 import { parseUrlQuery } from '../util/tool'
 import { DebuggerMesssge } from './hooktype'
 import localWebId from '../util/local'
 import { sessionId } from './session';
+import StorageManager from '../plugin/storage';
 
 interface TokenT {
   user_unique_id?: string,
@@ -35,7 +35,7 @@ export default class Token {
     this.collect = collect
     this.config = config
     this.configManager = this.collect.configManager
-    this.storage = new Storage(false)
+    this.storage = new StorageManager()
     this.tokenKey = `__tea_cache_tokens_${config.app_id}`
     this.enableAnonymousid = config.enable_anonymousid
     this.enableTTwebid = config.enable_ttwebid
@@ -60,7 +60,7 @@ export default class Token {
       const cookieToken = this.storage.getCookie(this.tokenKey, this.cookieDomain)
       this.cacheToken = cookieToken && typeof cookieToken === 'string' ? JSON.parse(cookieToken) : {}
     } else {
-      this.cacheToken = this.storage.getItem(this.tokenKey) || {}
+      this.cacheToken = this.storage.getLocalItem(this.tokenKey) || {}
     }
     this.tokenType = this.cacheToken && this.cacheToken._type_ ? this.cacheToken._type_ : 'default'
     if (this.tokenType === 'custom' && !this.enableCustomWebid && !this.enableAnonymousid) {
@@ -308,7 +308,7 @@ export default class Token {
     if (this.enableCookie || this.enableTTwebid) {
       this.storage.setCookie(this.tokenKey, token, this.expiresTime, this.cookieDomain)
     } else {
-      this.storage.setItem(this.tokenKey, token)
+      this.storage.setLocalItem(this.tokenKey, token)
     }
     this.cacheToken = token
   }
