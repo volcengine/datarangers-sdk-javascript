@@ -165,25 +165,7 @@ const logPluginSDKEntry = [
         format: 'cjs',
       },
     ],
-  },
-  {
-    input: 'src/plugin/store/store.ts',
-    output: [
-      {
-        file: 'es/plugin/store.js',
-        format: 'es',
-      },
-    ],
-  },
-  {
-    input: 'src/plugin/store/store.ts',
-    output: [
-      {
-        file: 'lib/plugin/store.js',
-        format: 'cjs',
-      },
-    ],
-  },
+  }
   {
     input: 'src/plugin/duration/duration.ts',
     output: [

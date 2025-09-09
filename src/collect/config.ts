@@ -306,7 +306,7 @@ export default class ConfigManager {
     }
   }
   getItem(key) {
-    if (this.initConfig?.configPersist === 1) {
+    if (this.initConfig && this.initConfig.configPersist === 1) {
       return this.storage.getSessionItem(key);
     } else {
       return this.storage.getLocalItem(key)
@@ -314,7 +314,7 @@ export default class ConfigManager {
   }
 
   setItem(key, value) {
-    if (this.initConfig?.configPersist === 1) {
+    if (this.initConfig && this.initConfig.configPersist === 1) {
       this.storage.setSessionItem(key, value);
     } else {
       this.storage.setLocalItem(key, value)
