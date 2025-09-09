@@ -33,7 +33,7 @@
     "@babel/plugin-transform-shorthand-properties": "^7.16.7",
     "@babel/plugin-transform-spread": "^7.7.4",
     "@babel/polyfill": "^7.12.1",
-    "@babel/preset-env": "^7.6.3",
+    "@babel/preset-env": "7.6.3",
     "@babel/preset-flow": "^7.17.12",
     "@babel/preset-typescript": "^7.17.12",
     "@babel/types": "^7.18.0",
