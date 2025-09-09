@@ -47,7 +47,7 @@ function isSupportSession() {
 const local = {
   getItem(key) {
     try {
-      var value = localStorage.getItem(key)
+      let value = localStorage.getItem(key)
       let ret = value
       try {
         if (value && typeof value === 'string') {
@@ -61,7 +61,7 @@ const local = {
   },
   setItem(key, value) {
     try {
-      var stringValue = typeof value === 'string' ? value : JSON.stringify(value)
+      const stringValue = typeof value === 'string' ? value : JSON.stringify(value)
       localStorage.setItem(key, stringValue)
     } catch (e) { }
   },
@@ -72,7 +72,7 @@ const local = {
   },
   getCookie(name: string, domain?: string) {
     try {
-      var _matches = Cookies.get(name, { domain: domain || document.domain })
+      const _matches = Cookies.get(name)
       return _matches
     } catch (e) {
       return ''
@@ -110,7 +110,7 @@ const session = {
   },
   setItem(key, value) {
     try {
-      var stringValue = typeof value === 'string' ? value : JSON.stringify(value)
+      const stringValue = typeof value === 'string' ? value : JSON.stringify(value)
       sessionStorage.setItem(key, stringValue)
     } catch (e) { }
   },

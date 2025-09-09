@@ -165,7 +165,7 @@ const logPluginSDKEntry = [
         format: 'cjs',
       },
     ],
-  }
+  },
   {
     input: 'src/plugin/duration/duration.ts',
     output: [
