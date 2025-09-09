@@ -162,10 +162,10 @@ export default class ConfigManager {
     const abKey = `__tea_sdk_ab_version_${this.initConfig.app_id}`;
     let abCache = null;
     if (this.initConfig.ab_cross) {
-      const ab_cookie = this.localStorage.getCookie(abKey, this.initConfig.ab_cookie_domain);
+      const ab_cookie = this.storage.getCookie(abKey, this.initConfig.ab_cookie_domain);
       abCache = ab_cookie ? JSON.parse(ab_cookie) : null;
     } else {
-      abCache = this.localStorage.getItem(abKey);
+      abCache = this.storage.getLocalItem(abKey);
     }
     this.setAbCache(abCache);
   }

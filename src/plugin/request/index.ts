@@ -71,7 +71,7 @@ class RequestManager {
   }
   useFetch(requestOptions: RequestOptions) {
     // 自定义场景，使用fetch
-    const { url, data, method, success, fail, status, timeout, useBeacon, encryption, encryption_header } = requestOptions;
+    const { url, data, method, success, fail, status, timeout, useBeacon, encryption, encryption_header, withCredentials } = requestOptions;
     if (window.fetch && typeof Request !== 'undefined') {
       let fetchRequest = {
         method: method || 'POST',
@@ -100,6 +100,9 @@ class RequestManager {
       }
       if (encryption && encryption_header) {
         headers['Content-Type'] = `application/octet-stream;tt-data=${encryption_header}`;
+      }
+      if (withCredentials) {
+        fetchRequest['credentials'] = 'include';
       }
       fetchRequest['body'] = requestBody;
       fetchRequest['headers'] = headers;

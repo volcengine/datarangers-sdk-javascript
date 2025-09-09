@@ -26,6 +26,7 @@ export default class Event {
   beconEventCache: TEvent[] = []
   eventCheck: any
   refer_key: string
+  enable_ttwebid: boolean
   apply(collect: any, config: IInitParam) {
     this.collect = collect
     this.config = config
@@ -35,6 +36,7 @@ export default class Event {
     this.maxReport = config.max_report || 20
     this.reportTime = config.reportTime || 30
     this.timeout = config.timeout || 100000
+    this.enable_ttwebid = config.enable_ttwebid
     this.reportUrl = this.configManager.getUrl('event')
     this.eventKey = `__tea_cache_events_${this.configManager.get('app_id')}`
     this.beconKey = `__tea_cache_events_becon_${this.configManager.get('app_id')}`
@@ -267,6 +269,7 @@ export default class Event {
           useBeacon: becon,
           encryption: this.config.enable_encryption,
           encryption_header: this.config.encryption_header,
+          withCredentials: this.enable_ttwebid,
         })
         this.collect.emit(Types.SubmitVerifyH, reportItem);
         this.collect.emit(Types.SubmitAfter, reportItem);

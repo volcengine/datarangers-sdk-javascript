@@ -350,7 +350,8 @@ export default class Token {
         },
         timeout: this.timeout,
         encryption: this.config.enable_encryption,
-        encryption_header: this.config.encryption_header
+        encryption_header: this.config.encryption_header,
+        withCredentials: this.enableTTwebid
       })
     })
   }
