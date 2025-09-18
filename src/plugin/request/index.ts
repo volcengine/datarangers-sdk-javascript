@@ -101,9 +101,9 @@ class RequestManager {
       if (encryption && encryption_header) {
         headers['Content-Type'] = `application/octet-stream;tt-data=${encryption_header}`;
       }
-      if (withCredentials) {
-        fetchRequest['credentials'] = 'include';
-      }
+      // if (withCredentials) {
+      //   fetchRequest['credentials'] = 'include';
+      // }
       fetchRequest['body'] = requestBody;
       fetchRequest['headers'] = headers;
       let controller = null;
@@ -187,9 +187,9 @@ class RequestManager {
           xhr.setRequestHeader(key, this.customHeader[key])
         }
       }
-      if (withCredentials) {
-        xhr.withCredentials = true
-      }
+      // if (withCredentials) {
+      //   xhr.withCredentials = true
+      // }
       if (timeout) {
         xhr.timeout = timeout
         xhr.ontimeout = () => {
