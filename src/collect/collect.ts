@@ -53,7 +53,7 @@ export default class Collector {
   started: boolean = false
   remotePlugin: any
   eventFilter: any
-  destroyInstance: boolean = false
+  destroy: boolean = false
   adapters: Record<string, any> = {}
   sdkReady: boolean = false
   debugger: any
@@ -623,15 +623,17 @@ export default class Collector {
   }
 
   destoryInstance() {
-    if (this.destroyInstance) return;
-    this.destroyInstance = true;
-    this.off(Types.TokenComplete);
+    this.destroyInstance();
   }
 
   destoryInstace() {
-    if (this.destroyInstance) return;
-    this.destroyInstance = true
-    this.off(Types.TokenComplete)
+    this.destroyInstance();
+  }
+
+  destroyInstance() {
+    if (this.destroy) return;
+    this.destroy = true;
+    this.off(Types.TokenComplete);
   }
 }
 

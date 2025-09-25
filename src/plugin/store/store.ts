@@ -17,7 +17,7 @@ class Store {
     if (!config.enable_storage || config.disable_storage) return;
     this.collect = collect;
     this.config = config;
-    if (this.collect.destroyInstance) return;
+    if (this.collect.destroy) return;
     const { Types } = collect;
     const { storage } = collect.adapters;
     this.storage = new storage(false);

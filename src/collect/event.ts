@@ -104,7 +104,7 @@ export default class Event {
     const cache = this.storgae.getCacheItem(this.beconKey) || []
     const newCache = [...events, ...cache]
     this.storgae.setCacheItem(this.beconKey, newCache)
-    if (this.collect.destroyInstance) return
+    if (this.collect.destroy) return
     if (!this.collect.tokenManager.getReady()) return
     if (!this.collect.sdkReady) return
     this.storgae.removeCacheItem(this.beconKey)
@@ -117,7 +117,7 @@ export default class Event {
     this.send(this.split(this.merge(cache)), true)
   }
   report(becon: boolean) {
-    if (this.collect.destroyInstance) return
+    if (this.collect.destroy) return
     if (!this.collect.tokenManager.getReady()) return
     if (!this.collect.sdkReady) return
     const eventData = this.storgae.getCacheItem(this.eventKey) || []

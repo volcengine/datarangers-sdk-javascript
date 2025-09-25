@@ -453,7 +453,7 @@ export default class Ab {
       this.versions = this.versions.filter((vid) => versions.includes(vid));
       const { $ab_url, $ab_modification } = abData;
       if ($ab_modification && $ab_modification.val && this.enable_ab_visual) {
-        if (this.collect.destroyInstance) return;
+        if (this.collect.destroy) return;
         this.getVar('$ab_modification', window.location.href, () => {
           // loadVisual($ab_modification.val);
           this.closeOverlayer();
@@ -466,7 +466,7 @@ export default class Ab {
             if (this.editMode) return;
             if (val !== window.location.href) {
               setTimeout(() => {
-                if (this.collect.destroyInstance) return;
+                if (this.collect.destroy) return;
                 let jump = `${val}`;
                 jump = jump.indexOf('http') === -1 ? `https://${jump}` : jump;
                 const newhost = parseURL(jump).host

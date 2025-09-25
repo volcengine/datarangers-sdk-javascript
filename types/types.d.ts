@@ -258,6 +258,8 @@ interface Sdk {
   resetStayDuration(url_path?: string, title?: string, url?: string): void;
   resetStayParams(url_path?: string, title?: string, url?: string): void;
 
+  destroyInstance(): void;
+  
   profileSet(profile: any): void;
   profileSetOnce(profile: any): void;
   profileIncrement(profile: any): void;
