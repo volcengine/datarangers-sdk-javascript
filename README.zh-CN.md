@@ -1,9 +1,11 @@
 简体中文 | [English](./README.md)
+
 # `DataRangers SDK - Web端`
+
 ## 构建SDK
 
 ```javascript
-npm install 
+npm install
 npm run build
 ```
 
@@ -25,7 +27,6 @@ SDK.config({
 });
 
 SDK.start(); // 初始化完成，事件开始上报
-
 ```
 
 ### 2. 上报自定义用户事件
@@ -41,7 +42,12 @@ SDK.event('play_video', {
 
 ```javascript
 // 可以在用户登录后获取带有唯一性的标识来设置给user_unique_id
- SDK.config({
-    user_unique_id: 'zhangsan', // 用户唯一标识，可以是你的系统登录用户id
-  });
+SDK.config({
+  user_unique_id: 'zhangsan', // 用户唯一标识，可以是你的系统登录用户id
+});
 ```
+
+## Security and privacy
+
+This project takes security seriously.
+For vulnerability reporting and supported versions, see [SECURITY.md](SECURITY.md)

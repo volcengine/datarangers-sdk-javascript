@@ -1,10 +1,11 @@
 English | [简体中文](./README.zh-CN.md)
 
 # `DataRangers SDK - javascript`
+
 ## Sample
 
 ```javascript
-npm install 
+npm install
 npm run build
 ```
 
@@ -26,7 +27,6 @@ SDK.config({
 });
 
 SDK.start(); // Setup complete and now events can be sent.
-
 ```
 
 ### 2. Report custom user behavior events
@@ -42,7 +42,12 @@ SDK.event('play_video', {
 
 ```javascript
 // Set "user_unique_id" after a user logs in and the user's unique identifier is retrieved.
- SDK.config({
-    user_unique_id: 'zhangsan', // Unique user identifier
-  });
+SDK.config({
+  user_unique_id: 'zhangsan', // Unique user identifier
+});
 ```
+
+## Security and privacy
+
+This project takes security seriously.
+For vulnerability reporting and supported versions, see [SECURITY.md](SECURITY.md)
