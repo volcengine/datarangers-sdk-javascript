@@ -36,7 +36,7 @@ export function getNodeText(node: Node): string {
     text = node.textContent.trim()
   } else if (node['dataset'] && node['dataset'].hasOwnProperty('teaTitle')) {
     text = node['getAttribute']('data-tea-title')
-  } else if (node['hasAttribute']('ata-tea-title')) {
+  } else if (node['hasAttribute']('data-tea-title')) {
     text = node['getAttribute']('data-tea-title')
   } else if (node['hasAttribute']('title')) {
     text = node['getAttribute']('title')
