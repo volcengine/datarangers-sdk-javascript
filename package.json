@@ -9,7 +9,7 @@
   "main": "lib/index.min.js",
   "module": "es/index.min.js",
   "types": "./types/types.d.ts",
-  "license": "ISC",
+  "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "sm-crypto": "^0.3.12"
   },
